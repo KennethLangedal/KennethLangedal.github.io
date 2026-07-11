@@ -82,6 +82,7 @@ body {
 }
 
 .score-cell {
+    touch-action: manipulation;
     cursor: pointer;
 }
 
@@ -129,6 +130,7 @@ body {
     height: 100%;
     border: 1px solid black;
     text-align: center;
+    touch-action: manipulation;
     cursor: pointer;
 }
 
@@ -318,6 +320,7 @@ body {
     padding: 10px 20px;
     font-size: 30px;
     margin: 40px 0;
+    touch-action: manipulation;
     cursor: pointer;
     background-color: lightgreen;
 }
