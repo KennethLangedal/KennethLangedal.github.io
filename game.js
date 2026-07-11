@@ -943,7 +943,7 @@ function encodeRoll(dice) {
 
 async function getEVData(table, bonus, rolls, id) {
     // 1. Construct the URL with your 4 integer parameters
-    const url = `http://89.167.37.171:8080?table=${table}&bonus=${bonus}&rolls=${rolls}&id=${id}`;
+    const url = `https://89.167.37.171?table=${table}&bonus=${bonus}&rolls=${rolls}&id=${id}`;
 
     try {
         // 2. Request the data from your server
