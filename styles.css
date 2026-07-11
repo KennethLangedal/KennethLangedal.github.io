@@ -5,9 +5,9 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 100vh;
     box-sizing: border-box;
     padding: 10px;
+    /* overflow: hidden; */
 }
 
 #score-sheet, .rolls-display, .controls-container {
@@ -42,7 +42,7 @@ body {
     /* Centers on page; gives space above/below */
     padding: 0 5px;
     /* Matches table padding so edges line up */
-    font-size: 1rem;
+    font-size: 1.6rem;
     font-weight: bold;
     /* Optional: makes the status stand out */
 }
@@ -52,14 +52,14 @@ body {
     max-width: 820px;
     margin: 10px auto;
     border-collapse: collapse;
-    font-size: 1rem;
+    font-size: 1.1rem;
 
     flex-grow: 1;
-    height: 50vh;
+    height: 70vh;
 }
 
 #score-sheet tr {
-    height: calc(100% / 24);
+    height: 1%;
 }
 
 #score-sheet th,
@@ -316,7 +316,7 @@ body {
     display: inline-block;
     width: 820px;
     padding: 10px 20px;
-    font-size: 20px;
+    font-size: 30px;
     margin: 40px 0;
     cursor: pointer;
     background-color: lightgreen;
@@ -326,23 +326,23 @@ body {
 
     /* Scale up base table text sizes */
     #score-sheet {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         /* Boosts default row text from 1rem to 1.2rem */
     }
 
     /* Scale up your split unicode cell labels and icons */
     .split-cell .label {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
     }
 
     .split-cell .icon {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         /* Makes the unicode dice symbol look clear on smaller viewports */
     }
 
     /* Scale up your player/robot status lines right above the dice */
     .rolls-display {
-        font-size: 1.2rem;
+        font-size: 1.15rem;
         margin: 15px auto;
     }
 }
