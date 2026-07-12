@@ -2,14 +2,21 @@
 <html>
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
+    <title>Yatzy Solver</title>
 </head>
 
 <body>
     <div class="game-container">
         <table id="score-sheet">
             <tr>
-                <th></th>
+                <th id="ev-header-cell">
+                    <label class="ev-header-label">
+                        <input type="checkbox" id="ev-toggle"> Show EV
+                    </label>
+                </th>
                 <th>Player</th>
                 <th>Robot</th>
             </tr>
@@ -231,8 +238,20 @@
         </table>
     </div>
     <div class="rolls-display">
-        <div class="roll-status" id="player-rolls">Player rolls left: <span id="player-count">3</span></div>
-        <div class="roll-status" id="robot-rolls">Robot rolls left: <span id="robot-count">3</span></div>
+        <div class="roll-status" id="player-rolls">Player rolls: <div id="player-chips" class="chips-container"></div></div>
+        <div class="roll-status" id="robot-rolls">Robot rolls: <div id="robot-chips" class="chips-container"></div></div>
+    </div>
+    <div id="ev-info-panel" class="ev-info-panel">
+        <div class="ev-info-card current-card">
+            <span class="ev-card-label">Current Hold EV</span>
+            <span id="current-hold-ev" class="ev-card-value">-</span>
+        </div>
+        <div class="ev-info-card best-card">
+            <span class="ev-card-label">Best Hold EV</span>
+            <span id="best-hold-ev" class="ev-card-value">-</span>
+            <span id="best-hold-dice" class="ev-card-dice"></span>
+        </div>
+        <button id="select-best-hold-btn" class="ev-action-btn">Select Best Hold</button>
     </div>
     <div class="dice-container">
     </div>

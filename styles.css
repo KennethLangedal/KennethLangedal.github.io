@@ -40,33 +40,59 @@ body {
     /* Matches the max-width of your score sheet */
     margin: 0px auto 0px auto;
     /* Centers on page; gives space above/below */
-    padding: 0 5px;
+    padding: 2px 2px;
     /* Matches table padding so edges line up */
     font-size: 1.6rem;
     font-weight: bold;
     /* Optional: makes the status stand out */
 }
 
-#score-sheet {
+.game-container {
     width: 100%;
     max-width: 820px;
-    margin: 10px auto;
-    border-collapse: collapse;
-    font-size: 1.1rem;
-
-    flex-grow: 1;
-    height: 70vh;
+    margin: 15px auto;
+    background: #ffffff;
+    border: 1px solid #e8eaed;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    overflow: scroll;
+    box-sizing: border-box;
 }
 
-#score-sheet tr {
-    height: 1%;
+#score-sheet {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1.05rem;
+    background-color: #ffffff;
+}
+
+#score-sheet th {
+    background-color: #f8f9fa;
+    color: #3c4043;
+    font-weight: 700;
+    font-size: 1.1rem;
+    border-bottom: 2px solid #dadce0;
 }
 
 #score-sheet th,
 #score-sheet td {
-    border: 1px solid black;
-    padding: 5px;
+    border: 1px solid #f1f3f4;
+    padding: 10px 14px;
+    box-sizing: border-box;
+}
+
+#score-sheet th:first-child,
+#score-sheet td:first-child {
+    width: 50%;
     text-align: left;
+}
+
+#score-sheet th:nth-child(2),
+#score-sheet th:nth-child(3),
+#score-sheet td:nth-child(2),
+#score-sheet td:nth-child(3) {
+    width: 25%;
+    text-align: center;
 }
 
 .score-cell.preview-score {
@@ -78,7 +104,9 @@ body {
 
 #score-sheet .thick-border th,
 #score-sheet .thick-border td {
-    border-top: 3px solid black;
+    border-top: 2px solid #202124;
+    background-color: #f8f9fa;
+    font-weight: bold;
 }
 
 .score-cell {
@@ -98,15 +126,17 @@ body {
 
 .dice-container {
     width: 100%;
-    margin: 0 auto;
+    margin: 7pt auto;
     font-size: 0;
+    white-space: nowrap;
+    text-align: center;
 }
 
 .scene {
     width: 70px;
     height: 70px;
     perspective: 400px;
-    margin: 35px;
+    margin: 15px;
     display: inline-block;
     position: relative;
     font-size: 1rem;
@@ -318,38 +348,90 @@ body {
 
 #roll-button {
     display: inline-block;
-    width: 820px;
-    padding: 10px 20px;
-    font-size: 30px;
-    margin: 40px 0;
+    width: 100%;
+    max-width: 820px;
+    padding: 14px 28px;
+    font-size: 24px;
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    margin: 30px 0;
     touch-action: manipulation;
     user-select: none;
     cursor: pointer;
-    background-color: lightgreen;
+    background-color: #27bb31;
+    box-shadow: 0 4px 10px rgba(39, 187, 49, 0.3);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+#roll-button:hover {
+    background-color: #219e29;
+    box-shadow: 0 6px 14px rgba(39, 187, 49, 0.4);
+    transform: translateY(-2px);
+}
+
+#roll-button:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(39, 187, 49, 0.3);
+}
+
+#roll-button:disabled {
+    background-color: #dadce0;
+    color: #80868b;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
 }
 
 @media (max-width: 600px) {
-
-    /* Scale up base table text sizes */
-    #score-sheet {
-        font-size: 1.15rem;
-        /* Boosts default row text from 1rem to 1.2rem */
+    body {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        padding: 6px;
+        margin: 0;
     }
 
-    /* Scale up your split unicode cell labels and icons */
+    .game-container {
+        flex: 1 1 0%;
+        min-height: 0;
+        margin: 4px auto;
+    }
+
+    /* Make table layout highly compact on mobile to fit in single view */
+    #score-sheet {
+        font-size: 1.85vh;
+        height: 100%;
+    }
+
+    /* Adjust cell padding on mobile */
+    #score-sheet th,
+    #score-sheet td {
+        padding: 0.2vh 6px;
+    }
+
+    /* Scale down unicode cell labels and icons */
     .split-cell .label {
-        font-size: 1.15rem;
+        font-size: 1.85vh;
     }
 
     .split-cell .icon {
-        font-size: 1.5rem;
-        /* Makes the unicode dice symbol look clear on smaller viewports */
+        font-size: 2.1vh;
     }
 
-    /* Scale up your player/robot status lines right above the dice */
+    /* Adjust status lines above dice */
     .rolls-display {
-        font-size: 1.15rem;
-        margin: 15px auto;
+        font-size: 1.7vh;
+        margin: 4px auto;
+    }
+
+    /* Make roll button compact on mobile */
+    #roll-button {
+        padding: 1.1vh 20px;
+        font-size: 2.2vh;
+        margin: 6px 0;
     }
 }
 
@@ -395,3 +477,245 @@ body {
         width: 400px;
     }
 } */
+
+/* EV Helper CSS Styles */
+#ev-header-cell {
+    padding: 0 !important;
+}
+
+.ev-header-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #1a73e8; /* Blue accent */
+    user-select: none;
+    transition: background-color 0.2s;
+}
+
+.ev-header-label:hover {
+    background-color: #f1f3f4;
+}
+
+.ev-header-label input[type="checkbox"] {
+    margin-right: 6px;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    accent-color: #1a73e8;
+}
+
+.ev-info-panel {
+    display: none;
+    width: 100%;
+    max-width: 820px;
+    margin: 0px auto 30px auto;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 20px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    box-sizing: border-box;
+}
+
+.ev-info-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1;
+}
+
+.ev-card-label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+
+.ev-card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #202124;
+}
+
+.current-card .ev-card-value {
+    color: #1a73e8;
+}
+
+.best-card .ev-card-value {
+    color: #27bb31;
+}
+
+.ev-card-dice {
+    font-size: 1.25rem;
+    margin-top: 4px;
+    color: #27bb31;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ev-action-btn {
+    background-color: #27bb31;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(39, 187, 49, 0.3);
+    transition: all 0.2s ease;
+}
+
+.ev-action-btn:hover {
+    background-color: #219e29;
+    box-shadow: 0 4px 8px rgba(39, 187, 49, 0.4);
+    transform: translateY(-1px);
+}
+
+.ev-action-btn:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(39, 187, 49, 0.3);
+}
+
+.ev-action-btn:disabled {
+    background-color: #dadce0;
+    color: #80868b;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+.suggested-icon {
+    display: none;
+    position: absolute;
+    top: -30px;
+    left: 5px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #27bb31;
+    z-index: 10;
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1.5px solid #27bb31;
+    border-radius: 4px;
+    padding: 1px 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-transform: uppercase;
+}
+
+.scene.suggested-keep .suggested-icon {
+    display: block;
+}
+
+.scene.suggested-keep {
+    box-shadow: 0 0 15px rgba(39, 187, 49, 0.7);
+    border-radius: 12px;
+}
+
+.score-cell.preview-score.best-ev-cell {
+    color: #27bb31;
+    background-color: rgba(39, 187, 49, 0.08);
+    font-weight: 900;
+}
+
+/* Tactile Reroll Chips styling */
+.chips-container {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 8px;
+    vertical-align: middle;
+    gap: 2px;
+}
+
+.roll-chip {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: radial-gradient(circle at 35% 35%, #444, #111 85%);
+    border: 2px solid #000;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.6), inset 0 1px 1px rgba(255,255,255,0.25);
+    position: relative;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.roll-chip::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 1px dashed rgba(255,255,255,0.2);
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+
+.chips-more-text {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #333;
+    margin-left: 4px;
+}
+
+.chips-count-text {
+    font-size: 1rem;
+    color: #666;
+    font-weight: normal;
+    margin-left: 4px;
+}
+
+@media (max-width: 600px) {
+    .scene {
+        transform: scale(0.65);
+        margin: -10px -6px; /* Spaced out visually but fits on a single row */
+    }
+    
+    .ev-info-panel {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        margin: 6px auto;
+        gap: 6px;
+    }
+
+    .ev-info-card {
+        align-items: flex-start;
+    }
+
+    .ev-card-label {
+        font-size: 0.65rem;
+        margin-bottom: 2px;
+    }
+
+    .ev-card-value {
+        font-size: 1.1rem;
+    }
+
+    .ev-card-dice {
+        font-size: 0.95rem;
+        margin-top: 1px;
+    }
+    
+    .ev-action-btn {
+        width: auto;
+        padding: 6px 10px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+    }
+}

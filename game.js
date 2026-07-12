@@ -975,6 +975,81 @@ document.addEventListener('DOMContentLoaded', function () {
     const diceContainer = document.querySelector('.dice-container');
 
     const rollButton = document.getElementById('roll-button');
+    const evToggle = document.getElementById('ev-toggle');
+    const selectBestBtn = document.getElementById('select-best-hold-btn');
+
+    let humanEVData = null;
+    let evLoading = false;
+    let currentRollToken = 0;
+
+    function getDieIcon(value) {
+        return String.fromCharCode(9855 + value); // 9856 is ⚀
+    }
+
+    function updateChips(containerId, count) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const visibleChips = Math.min(count, 6);
+        for (let i = 0; i < visibleChips; i++) {
+            const chip = document.createElement('span');
+            chip.className = 'roll-chip';
+            container.appendChild(chip);
+        }
+        
+        if (count > 6) {
+            const moreText = document.createElement('span');
+            moreText.className = 'chips-more-text';
+            moreText.textContent = `+${count - 6}`;
+            container.appendChild(moreText);
+        }
+        
+        const numText = document.createElement('span');
+        numText.className = 'chips-count-text';
+        numText.textContent = ` (${count})`;
+        container.appendChild(numText);
+    }
+
+    function getCurrentHoldOptionIndex() {
+        if (!scenes) return 20;
+        const positions = [0, 1, 2, 3, 4, 5];
+        positions.sort((a, b) => gameState.dice[a] - gameState.dice[b]);
+        let mask = 0;
+        for (let i = 0; i < 6; i++) {
+            if (scenes[positions[i]].classList.contains('locked')) {
+                mask |= (1 << i);
+            }
+        }
+        return 20 + mask;
+    }
+
+    async function fetchHumanEV() {
+        if (gameState.currentPlayer !== 'human' || gameState.rolled === 0) {
+            humanEVData = null;
+            return;
+        }
+        const token = currentRollToken;
+        evLoading = true;
+        renderUI();
+        try {
+            const table = gameState.human.tableMask;
+            const bonus = Math.min(84, Math.max(0, 84 - gameState.human.bonusTarget));
+            const rolls = gameState.rollsLeft;
+            const rollId = rollIdMap.get(encodeRoll(gameState.dice));
+            const data = await getEVData(table, bonus, rolls, rollId);
+            if (token === currentRollToken) {
+                humanEVData = data;
+            }
+        } catch (err) {
+            console.error("Error fetching human EV:", err);
+        } finally {
+            if (token === currentRollToken) {
+                evLoading = false;
+                renderUI();
+            }
+        }
+    }
 
     let gameState = {
         currentPlayer: 'human',
@@ -1035,8 +1110,13 @@ document.addEventListener('DOMContentLoaded', function () {
         lockIcon.className = 'lock-icon';
         lockIcon.textContent = 'Keep';
 
+        const suggestedIcon = document.createElement('div');
+        suggestedIcon.className = 'suggested-icon';
+        suggestedIcon.textContent = 'Best';
+
         scene.appendChild(cube);
         scene.appendChild(lockIcon);
+        scene.appendChild(suggestedIcon);
 
         scene.onclick = function () {
             this.classList.toggle('locked');
@@ -1055,10 +1135,49 @@ document.addEventListener('DOMContentLoaded', function () {
     const scoreCells = document.querySelectorAll('.score-cell');
     const scoreCellsRobot = document.querySelectorAll('.score-cell-robot');
 
+    evToggle.addEventListener('change', function () {
+        if (this.checked) {
+            if (gameState.currentPlayer === 'human' && gameState.rolled > 0 && !humanEVData && !evLoading) {
+                fetchHumanEV();
+            } else {
+                renderUI();
+            }
+        } else {
+            renderUI();
+        }
+    });
+
+    selectBestBtn.onclick = function () {
+        if (gameState.currentPlayer !== 'human' || gameState.rolled === 0 || !humanEVData || gameState.rollsLeft === 0) {
+            return;
+        }
+        let bestHoldOpt = 20;
+        for (let i = 21; i < 84; i++) {
+            if (humanEVData[i] > humanEVData[bestHoldOpt]) {
+                bestHoldOpt = i;
+            }
+        }
+        const bestMask = bestHoldOpt - 20;
+        const positions = [0, 1, 2, 3, 4, 5];
+        positions.sort((a, b) => gameState.dice[a] - gameState.dice[b]);
+        for (let i = 0; i < 6; i++) {
+            const dieIdx = positions[i];
+            if ((bestMask >> i) & 1) {
+                scenes[dieIdx].classList.add('locked');
+            } else {
+                scenes[dieIdx].classList.remove('locked');
+            }
+        }
+        renderUI();
+    };
+
     rollButton.onclick = async function () {
         if (gameState.currentPlayer === 'human' && gameState.rollsLeft > 0) {
+            currentRollToken++;
+            humanEVData = null;
             await rollDice();
             renderUI(); // Re-render UI to enable/disable dice locking
+            fetchHumanEV();
         }
     }
 
@@ -1090,6 +1209,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     gameState.human.extra_rolls = gameState.rollsLeft;
                     gameState.rollsLeft = 0;
                     gameState.currentPlayer = 'robot';
+                    currentRollToken++;
+                    humanEVData = null;
                     gameLoop(); // Start robot's turn
                 } else {
                 }
@@ -1320,20 +1441,55 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById("robot-bonus").textContent = gameState.robot.bonus;
         document.getElementById("robot-total").textContent = gameState.robot.score + gameState.robot.bonus;
 
-        if (gameState.currentPlayer == 'human')
-            document.getElementById('player-count').textContent = gameState.rollsLeft
-        else
-            document.getElementById('robot-count').textContent = gameState.rollsLeft
+        const playerRollsCount = gameState.currentPlayer === 'human' ? gameState.rollsLeft : 0;
+        const robotRollsCount = gameState.currentPlayer === 'robot' ? gameState.rollsLeft : 0;
+        updateChips('player-chips', playerRollsCount);
+        updateChips('robot-chips', robotRollsCount);
+
+        // Find the best unused category EV
+        let maxCategoryEV = -1;
+        if (evToggle && evToggle.checked && gameState.currentPlayer === 'human' && gameState.rolled && humanEVData && !evLoading) {
+            for (let i = 0; i < 20; i++) {
+                if (!((gameState.human.tableMask >> i) & 1)) {
+                    if (humanEVData[i] > maxCategoryEV) {
+                        maxCategoryEV = humanEVData[i];
+                    }
+                }
+            }
+        }
 
         // Update individual score cells for human
         for (let i = 0; i < 20; i++) {
             const playerCell = document.getElementById(`player-score-cell-${i}`);
+            playerCell.classList.remove("best-ev-cell"); // Clear first
+
             if (((gameState.human.tableMask >> i) & 1)) { // If category is used
                 playerCell.textContent = gameState.human.scores[i]; // Display stored score
                 playerCell.classList.remove("preview-score");
-            } else if (gameState.rolled && rollIdScoreMap.get(encodeRoll(gameState.dice))[i] > 0) {
-                playerCell.textContent = rollIdScoreMap.get(encodeRoll(gameState.dice))[i];
-                playerCell.classList.add("preview-score");
+            } else if (gameState.rolled) {
+                if (evToggle && evToggle.checked && gameState.currentPlayer === 'human') {
+                    if (evLoading) {
+                        playerCell.textContent = "...";
+                        playerCell.classList.add("preview-score");
+                    } else if (humanEVData) {
+                        playerCell.textContent = humanEVData[i].toFixed(2);
+                        playerCell.classList.add("preview-score");
+                        if (maxCategoryEV > -1 && humanEVData[i] === maxCategoryEV) {
+                            playerCell.classList.add("best-ev-cell");
+                        }
+                    } else {
+                        playerCell.textContent = "";
+                        playerCell.classList.remove("preview-score");
+                    }
+                } else {
+                    if (rollIdScoreMap.get(encodeRoll(gameState.dice))[i] > 0) {
+                        playerCell.textContent = rollIdScoreMap.get(encodeRoll(gameState.dice))[i];
+                        playerCell.classList.add("preview-score");
+                    } else {
+                        playerCell.textContent = ""; // Clear potential score if not used yet
+                        playerCell.classList.remove("preview-score");
+                    }
+                }
             } else {
                 playerCell.textContent = ""; // Clear potential score if not used yet
                 playerCell.classList.remove("preview-score");
@@ -1356,6 +1512,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Allow locking/unlocking dice only during human's turn AND after at least one roll
                 scenes[i].onclick = function () {
                     this.classList.toggle('locked');
+                    renderUI(); // Make sure UI updates when dice are toggled!
                 }
             } else {
                 // Disable locking/unlocking dice
@@ -1392,6 +1549,98 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!((gameState.human.tableMask >> i) & 1)) { // Only clear if not already scored
                     scoreCells[i].textContent = "";
                 }
+            }
+        }
+
+        // --- EV Info Panel rendering ---
+        const evInfoPanel = document.getElementById('ev-info-panel');
+        if (evToggle && evToggle.checked && gameState.currentPlayer === 'human' && gameState.rolled > 0) {
+            if (evInfoPanel) {
+                evInfoPanel.style.display = 'flex';
+            }
+            if (evLoading) {
+                document.getElementById('current-hold-ev').textContent = "Loading...";
+                document.getElementById('best-hold-ev').textContent = "Loading...";
+                document.getElementById('best-hold-dice').textContent = "";
+                if (selectBestBtn) selectBestBtn.disabled = true;
+            } else if (humanEVData) {
+                if (gameState.rollsLeft > 0) {
+                    // We have rolls left, so holding is possible
+                    // 1. Current hold EV
+                    const currentMask = getCurrentHoldOptionIndex() - 20;
+                    const currentEV = humanEVData[20 + currentMask];
+                    document.getElementById('current-hold-ev').textContent = currentEV.toFixed(2);
+
+                    // 2. Best hold EV
+                    let bestHoldOpt = 20;
+                    for (let i = 21; i < 84; i++) {
+                        if (humanEVData[i] > humanEVData[bestHoldOpt]) {
+                            bestHoldOpt = i;
+                        }
+                    }
+                    const bestEV = humanEVData[bestHoldOpt];
+                    document.getElementById('best-hold-ev').textContent = bestEV.toFixed(2);
+
+                    // 3. Best hold dice description
+                    const bestMask = bestHoldOpt - 20;
+                    const positions = [0, 1, 2, 3, 4, 5];
+                    positions.sort((a, b) => gameState.dice[a] - gameState.dice[b]);
+                    
+                    const bestHoldValues = [];
+                    for (let i = 0; i < 6; i++) {
+                        if ((bestMask >> i) & 1) {
+                            bestHoldValues.push(gameState.dice[positions[i]]);
+                        }
+                    }
+
+                    let bestHoldText = "";
+                    if (bestHoldValues.length === 0) {
+                        bestHoldText = "(Reroll all)";
+                    } else if (bestHoldValues.length === 6) {
+                        bestHoldText = "(Keep all)";
+                    } else {
+                        bestHoldText = bestHoldValues.map(v => getDieIcon(v)).join(" ");
+                    }
+                    document.getElementById('best-hold-dice').textContent = bestHoldText;
+                    if (selectBestBtn) selectBestBtn.disabled = false;
+
+                    // 4. Highlight the suggested dice
+                    for (let i = 0; i < scenes.length; i++) {
+                        scenes[i].classList.remove('suggested-keep');
+                    }
+                    for (let i = 0; i < 6; i++) {
+                        if ((bestMask >> i) & 1) {
+                            scenes[positions[i]].classList.add('suggested-keep');
+                        }
+                    }
+                } else {
+                    // No rolls left
+                    document.getElementById('current-hold-ev').textContent = "N/A";
+                    document.getElementById('best-hold-ev').textContent = "N/A";
+                    document.getElementById('best-hold-dice').textContent = "(No rolls left)";
+                    if (selectBestBtn) selectBestBtn.disabled = true;
+
+                    for (let i = 0; i < scenes.length; i++) {
+                        scenes[i].classList.remove('suggested-keep');
+                    }
+                }
+            } else {
+                document.getElementById('current-hold-ev').textContent = "-";
+                document.getElementById('best-hold-ev').textContent = "-";
+                document.getElementById('best-hold-dice').textContent = "";
+                if (selectBestBtn) selectBestBtn.disabled = true;
+
+                for (let i = 0; i < scenes.length; i++) {
+                    scenes[i].classList.remove('suggested-keep');
+                }
+            }
+        } else {
+            if (evInfoPanel) {
+                evInfoPanel.style.display = 'none';
+            }
+            // Make sure to clean up suggested keep highlights when Show EV is unchecked
+            for (let i = 0; i < scenes.length; i++) {
+                scenes[i].classList.remove('suggested-keep');
             }
         }
     }
