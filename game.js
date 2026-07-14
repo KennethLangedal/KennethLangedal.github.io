@@ -990,21 +990,21 @@ document.addEventListener('DOMContentLoaded', function () {
         const container = document.getElementById(containerId);
         if (!container) return;
         container.innerHTML = '';
-        
+
         const visibleChips = Math.min(count, 6);
         for (let i = 0; i < visibleChips; i++) {
             const chip = document.createElement('span');
             chip.className = 'roll-chip';
             container.appendChild(chip);
         }
-        
+
         if (count > 6) {
             const moreText = document.createElement('span');
             moreText.className = 'chips-more-text';
             moreText.textContent = `+${count - 6}`;
             container.appendChild(moreText);
         }
-        
+
         const numText = document.createElement('span');
         numText.className = 'chips-count-text';
         numText.textContent = ` (${count})`;
@@ -1040,6 +1040,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await getEVData(table, bonus, rolls, rollId);
             if (token === currentRollToken) {
                 humanEVData = data;
+                for (let i = 0; i < 84; i++) {
+                    humanEVData[i] += gameState.human.score;
+                }
             }
         } catch (err) {
             console.error("Error fetching human EV:", err);
@@ -1059,6 +1062,7 @@ document.addEventListener('DOMContentLoaded', function () {
         human: {
             score: 0,
             upper_score: 0,
+            upper_diff: 0,
             bonus: 0,
             bonusTarget: 84,
             tableMask: 0,
@@ -1068,6 +1072,7 @@ document.addEventListener('DOMContentLoaded', function () {
         robot: {
             score: 0,
             upper_score: 0,
+            upper_diff: 0,
             bonus: 0,
             bonusTarget: 84,
             tableMask: 0,
@@ -1198,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (categoryIndex <= 5) { // Upper section categories
                         gameState.human.bonusTarget -= points;
                         gameState.human.upper_score += points;
+                        gameState.human.upper_diff += points - (categoryIndex + 1) * 4;
                     }
 
                     if (gameState.human.bonusTarget <= 0 && gameState.human.bonus === 0) {
@@ -1357,6 +1363,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (opt <= 5) { // Upper section categories
                     gameState.robot.bonusTarget -= points;
                     gameState.robot.upper_score += points;
+                    gameState.robot.upper_diff += points - (opt + 1) * 4;
                 }
 
                 if (gameState.robot.bonusTarget < 0)
@@ -1373,13 +1380,9 @@ document.addEventListener('DOMContentLoaded', function () {
                     scenes[i].classList.remove('locked');
                 }
             }
-
-            document.getElementById("robot-bonus-total").textContent = gameState.robot.upper_score;
-            document.getElementById("robot-bonus").textContent = gameState.robot.bonus;
-            document.getElementById("robot-total").textContent = gameState.robot.score + gameState.robot.bonus;
         }
 
-        await wait(2000);
+        await wait(1500);
     }
 
     const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -1432,12 +1435,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderUI() {
         // Update human player scores
-        document.getElementById("player-bonus-total").textContent = gameState.human.upper_score;
+        document.getElementById("player-bonus-total").textContent = gameState.human.upper_score + " (" + (gameState.human.upper_diff > 0 ? "+" : "") + gameState.human.upper_diff + ")";
         document.getElementById("player-bonus").textContent = gameState.human.bonus;
         document.getElementById("player-total").textContent = gameState.human.score + gameState.human.bonus;
 
         // Update robot player scores
-        document.getElementById("robot-bonus-total").textContent = gameState.robot.upper_score;
+        document.getElementById("robot-bonus-total").textContent = gameState.robot.upper_score + " (" + (gameState.robot.upper_diff > 0 ? "+" : "") + gameState.robot.upper_diff + ")";
         document.getElementById("robot-bonus").textContent = gameState.robot.bonus;
         document.getElementById("robot-total").textContent = gameState.robot.score + gameState.robot.bonus;
 
@@ -1585,7 +1588,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const bestMask = bestHoldOpt - 20;
                     const positions = [0, 1, 2, 3, 4, 5];
                     positions.sort((a, b) => gameState.dice[a] - gameState.dice[b]);
-                    
+
                     const bestHoldValues = [];
                     for (let i = 0; i < 6; i++) {
                         if ((bestMask >> i) & 1) {
