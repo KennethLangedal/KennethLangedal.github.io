@@ -1382,6 +1382,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
+        renderUI();
         await wait(1500);
     }
 
