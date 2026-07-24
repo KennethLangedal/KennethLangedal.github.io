@@ -1,263 +1,44 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Yatzy Solver</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
-    <div class="game-container">
-        <table id="score-sheet">
-            <tr>
-                <th id="ev-header-cell">
-                    <label class="ev-header-label">
-                        <input type="checkbox" id="ev-toggle"> Show EV
-                    </label>
-                </th>
-                <th>Player</th>
-                <th>Robot</th>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Ones</span>
-                        <span class="icon">&#9856;&#9856;&#9856;&#9856;&#9856;&#9856;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-0"></td>
-                <td class="score-cell-robot" id="robot-score-cell-0"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Twos</span>
-                        <span class="icon">&#9857;&#9857;&#9857;&#9857;&#9857;&#9857;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-1"></td>
-                <td class="score-cell-robot" id="robot-score-cell-1"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Threes</span>
-                        <span class="icon">&#9858;&#9858;&#9858;&#9858;&#9858;&#9858;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-2"></td>
-                <td class="score-cell-robot" id="robot-score-cell-2"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Fours</span>
-                        <span class="icon">&#9859;&#9859;&#9859;&#9859;&#9859;&#9859;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-3"></td>
-                <td class="score-cell-robot" id="robot-score-cell-3"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Fives</span>
-                        <span class="icon">&#9860;&#9860;&#9860;&#9860;&#9860;&#9860;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-4"></td>
-                <td class="score-cell-robot" id="robot-score-cell-4"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Sixes</span>
-                        <span class="icon">&#9861;&#9861;&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-5"></td>
-                <td class="score-cell-robot" id="robot-score-cell-5"></td>
-            </tr>
-            <tr class="thick-border">
-                <td title="Upper section sum">Sum</td>
-                <td id="player-bonus-total"></td>
-                <td id="robot-bonus-total"></td>
-            </tr>
-            <tr>
-                <td title="Score 100 points if the upper section total is 84 or more">Bonus</td>
-                <td id="player-bonus"></td>
-                <td id="robot-bonus"></td>
-            </tr>
-            <tr class="thick-border">
-                <td>
-                    <div class="split-cell">
-                        <span class="label">One Pair</span>
-                        <span class="icon">&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-6"></td>
-                <td class="score-cell-robot" id="robot-score-cell-6"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Two Pair</span>
-                        <span class="icon">&#9860;&#9860;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-7"></td>
-                <td class="score-cell-robot" id="robot-score-cell-7"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Three Pairs</span>
-                        <span class="icon">&#9859;&#9859;&#9860;&#9860;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-8"></td>
-                <td class="score-cell-robot" id="robot-score-cell-8"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Three of a Kind</span>
-                        <span class="icon">&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-9"></td>
-                <td class="score-cell-robot" id="robot-score-cell-9"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Four of a Kind</span>
-                        <span class="icon">&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-10"></td>
-                <td class="score-cell-robot" id="robot-score-cell-10"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Five of a Kind</span>
-                        <span class="icon">&#9861;&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-11"></td>
-                <td class="score-cell-robot" id="robot-score-cell-11"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Small Straight</span>
-                        <span class="icon">&#9856;&#9857;&#9858;&#9859;&#9860;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-12"></td>
-                <td class="score-cell-robot" id="robot-score-cell-12"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Large Straight</span>
-                        <span class="icon">&#9857;&#9858;&#9859;&#9860;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-13"></td>
-                <td class="score-cell-robot" id="robot-score-cell-13"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Full Straight</span>
-                        <span class="icon">&#9856;&#9857;&#9858;&#9859;&#9860;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-14"></td>
-                <td class="score-cell-robot" id="robot-score-cell-14"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Full House</span>
-                        <span class="icon">&#9860;&#9860;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-15"></td>
-                <td class="score-cell-robot" id="robot-score-cell-15"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Castle</span>
-                        <span class="icon">&#9860;&#9860;&#9860;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-16"></td>
-                <td class="score-cell-robot" id="robot-score-cell-16"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Tower</span>
-                        <span class="icon">&#9860;&#9860;&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-17"></td>
-                <td class="score-cell-robot" id="robot-score-cell-17"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Chance</span>
-                        <span class="icon">&#9861;&#9861;&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-18"></td>
-                <td class="score-cell-robot" id="robot-score-cell-18"></td>
-            </tr>
-            <tr>
-                <td>
-                    <div class="split-cell">
-                        <span class="label">Yatzy</span>
-                        <span class="icon">&#9861;&#9861;&#9861;&#9861;&#9861;&#9861;</span>
-                    </div>
-                </td>
-                <td class="score-cell" id="player-score-cell-19"></td>
-                <td class="score-cell-robot" id="robot-score-cell-19"></td>
-            </tr>
-            <tr class="thick-border">
-                <td>Sum</td>
-                <td id="player-total"></td>
-                <td id="robot-total"></td>
-            </tr>
+    <!-- The score rows, the dice and the roll chips are all built in game.js. -->
+    <div id="sheet-wrap">
+        <table id="sheet">
+            <thead>
+                <tr>
+                    <th><label><input type="checkbox" id="ev-toggle">Show EV</label></th>
+                    <th id="th-human">Player</th>
+                    <th id="th-robot">Robot</th>
+                </tr>
+            </thead>
+            <tbody id="rows"></tbody>
         </table>
     </div>
-    <div class="rolls-display">
-        <div class="roll-status" id="player-rolls">Player rolls: <div id="player-chips" class="chips-container"></div></div>
-        <div class="roll-status" id="robot-rolls">Robot rolls: <div id="robot-chips" class="chips-container"></div></div>
+
+    <div id="rolls">
+        <span>Player rolls <b id="human-chips"></b></span>
+        <span>Robot rolls <b id="robot-chips"></b></span>
     </div>
-    <div id="ev-info-panel" class="ev-info-panel">
-        <div class="ev-info-card current-card">
-            <span class="ev-card-label">Current Hold EV</span>
-            <span id="current-hold-ev" class="ev-card-value">-</span>
-        </div>
-        <div class="ev-info-card best-card">
-            <span class="ev-card-label">Best Hold EV</span>
-            <span id="best-hold-ev" class="ev-card-value">-</span>
-            <span id="best-hold-dice" class="ev-card-dice"></span>
-        </div>
-        <button id="select-best-hold-btn" class="ev-action-btn">Select Best Hold</button>
+
+    <div id="dice"></div>
+
+    <div id="ev-panel" hidden>
+        <div><small>Current hold</small><strong id="cur-ev">-</strong></div>
+        <div><small>Best hold</small><strong id="best-ev">-</strong><span id="best-dice"></span></div>
+        <button id="best-btn">Select best hold</button>
     </div>
-    <div class="dice-container">
-    </div>
-    <div class="controls-container">
-        <button id="roll-button">Roll Dice</button>
-    </div>
+
+    <button id="roll">Roll Dice</button>
+
+    <script src="data.js"></script>
     <script src="game.js"></script>
 </body>
 
