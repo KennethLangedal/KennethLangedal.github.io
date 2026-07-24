@@ -23,6 +23,9 @@
         </table>
     </div>
 
+    <div id="offline" hidden>Solver unreachable &mdash; EV unavailable and the robot is
+        playing without it. Your own score is unaffected.</div>
+
     <div id="rolls">
         <span>Player rolls <b id="human-chips"></b></span>
         <span>Robot rolls <b id="robot-chips"></b></span>
@@ -38,7 +41,10 @@
 
     <button id="roll">Roll Dice</button>
 
+    <div id="analysis" hidden></div>
+
     <script src="data.js"></script>
+    <script src="analysis.js"></script>
     <script src="game.js"></script>
 </body>
 

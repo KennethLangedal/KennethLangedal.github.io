@@ -7,6 +7,8 @@ const $ = id => document.getElementById(id);
 const CATEGORIES = 20;
 const FULL = (1 << CATEGORIES) - 1;
 const ROLL_MS = 700;               // must match the .cube transition in styles.css
+const RETRIES = 1;                 // extra solver attempts before calling it down
+const RETRY_MS = 400;
 
 // [name, the dice that make up the category] in sheet order.
 const CATS = [
@@ -76,8 +78,20 @@ const G = {
     human: newSide(), robot: newSide(),
 };
 
+// Answers are cached by position, so the post-game analysis mostly re-reads
+// what play already fetched instead of asking the solver again.
+const evCache = new Map();
+
+// One entry per decision by either player, holding just enough to price it
+// against the solver afterwards. See analysis.js.
+const log = [];
+const record = (who, side, choice) => log.push({
+    who, choice, pos: posOf(side, G.rolls), score: side.score, dice: [...G.dice],
+});
+
 let ev = null;                     // 84 expected values for the human's position
 let evBusy = false;
+let solverDown = false;
 let token = 0;                     // invalidates EV requests that are now stale
 
 // --- solver -----------------------------------------------------------------
@@ -86,14 +100,50 @@ function encodeRoll(dice) {
     return [...dice].sort((a, b) => a - b).reduce((key, d, i) => key | (d - 1) << (3 * i), 0);
 }
 
+// Everything that identifies a decision point to the solver.
+const posOf = (side, rolls) => ({
+    mask: side.mask, bonus: 84 - side.target, rolls,
+    id: rollIdMap.get(encodeRoll(G.dice)),
+});
+const posKey = p => `${p.mask}|${p.bonus}|${p.rolls}|${p.id}`;
+
 // Returns 84 floats: 0..19 the EV of scoring each category, 20..83 the EV of
-// each hold, indexed by a bitmask over the dice sorted by value.
-async function fetchEV(side, rolls) {
-    const id = rollIdMap.get(encodeRoll(G.dice));
-    const url = `https://89.167.37.171?table=${side.mask}&bonus=${84 - side.target}&rolls=${rolls}&id=${id}`;
-    const res = await fetch(url);
+// each hold, indexed by a bitmask over the dice sorted by value. Each value
+// counts the rest of the game including the bonus, so adding the points already
+// banked turns it into a projected final total.
+async function fetchEV(pos) {
+    const res = await fetch('https://89.167.37.171' +
+        `?table=${pos.mask}&bonus=${pos.bonus}&rolls=${pos.rolls}&id=${pos.id}`);
     if (!res.ok) throw new Error(`solver returned ${res.status}`);
     return [...new Float32Array(await res.arrayBuffer())];
+}
+
+// Every solver call goes through here, so one dropped request can't strand the
+// game. Returns null once it has given up, and tracks reachability so the page
+// can say so. Recovers on its own as soon as a later call gets through.
+async function askSolver(pos) {
+    const key = posKey(pos);
+    if (evCache.has(key)) return evCache.get(key);
+    for (let attempt = 0; attempt <= RETRIES; attempt++) {
+        try {
+            const data = await fetchEV(pos);
+            evCache.set(key, data);
+            setSolverDown(false);
+            return data;
+        } catch (err) {
+            if (attempt === RETRIES) console.error('EV unavailable:', err);
+            // Deliberately not the skippable sleep(): a tap should not cut this.
+            else await new Promise(done => setTimeout(done, RETRY_MS));
+        }
+    }
+    setSolverDown(true);
+    return null;
+}
+
+function setSolverDown(down) {
+    if (down === solverDown) return;
+    solverDown = down;
+    render();
 }
 
 async function loadEV() {
@@ -101,14 +151,13 @@ async function loadEV() {
     const mine = token;
     evBusy = true;
     render();
-    try {
-        const data = await fetchEV(G.human, G.rolls);
-        // The solver scores the rest of the game, so add what is already banked.
-        if (mine === token) ev = data.map(v => v + G.human.score);
-    } catch (err) {
-        console.error('EV unavailable:', err);
+    const data = await askSolver(posOf(G.human, G.rolls));
+    // The solver scores the rest of the game, so add what is already banked.
+    if (mine === token) {
+        ev = data && data.map(v => v + G.human.score);
+        evBusy = false;
+        render();
     }
-    if (mine === token) { evBusy = false; render(); }
 }
 
 // Dice positions sorted by value: the order the solver's hold masks refer to.
@@ -290,6 +339,7 @@ function render() {
         bestBtn.disabled = !advising;
     }
 
+    $('offline').hidden = !solverDown;
     rollBtn.disabled = !(G.turn === 'human' && G.rolls > 0);
 }
 
@@ -317,10 +367,7 @@ async function robotTurn() {
         render();
         await sleep(500);
 
-        const data = await fetchEV(G.robot, G.rolls).catch(err => {
-            console.error('EV unavailable:', err);
-            return null;
-        });
+        const data = await askSolver(posOf(G.robot, G.rolls));
 
         // With no rolls left only the 20 categories are a legal choice, so the
         // robot can never hold its way out of ever filling one in.
@@ -334,6 +381,7 @@ async function robotTurn() {
         }
         // Refilling a used category would stall the game, so never take one.
         if (choice < CATEGORIES && (G.robot.mask >> choice & 1)) choice = greedy(G.robot);
+        if (data) record('robot', G.robot, choice);   // unpriced guesses are not decisions
 
         // Leave the scoring dice on screen; the next turn resets them.
         if (choice >= 20) setHold(choice - 20);
@@ -353,21 +401,20 @@ function greedy(side) {
 }
 
 function gameOver() {
-    const [h, r] = [G.human.score + G.human.bonus, G.robot.score + G.robot.bonus];
     rollBtn.disabled = true;
-    setTimeout(() => alert(`Game over, ${h} - ${r}. ` +
-        (h > r ? 'You win!' : h < r ? 'Robot wins!' : "It's a tie!")), 100);
+    showAnalysis();                // analysis.js
 }
 
 // --- input ------------------------------------------------------------------
 
 rollBtn.onclick = async () => {
     if (G.turn !== 'human' || !G.rolls) return;
+    if (G.rolled) record('human', G.human, 20 + holdMask());   // rerolling is a choice
     token++;
     ev = null;
     await rollDice();
     render();
-    if (evToggle.checked) loadEV();   // don't trouble the solver unless it's shown
+    loadEV();
 };
 
 dieEls.forEach(die => die.onclick = () => {
@@ -381,6 +428,7 @@ $('rows').onclick = e => {
     if (!cell || G.turn !== 'human' || !G.rolled) return;
     const i = +cell.dataset.i;
     if (G.human.mask >> i & 1) return;    // already filled in
+    record('human', G.human, i);
     score(G.human, i);
     token++;
     ev = null;
@@ -389,7 +437,7 @@ $('rows').onclick = e => {
 };
 
 evToggle.onchange = () => {
-    if (evToggle.checked && G.turn === 'human' && G.rolled && !ev && !evBusy) loadEV();
+    if (G.turn === 'human' && G.rolled && !ev && !evBusy) loadEV();
     else render();
 };
 

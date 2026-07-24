@@ -171,6 +171,25 @@ td.bot.latest {
     font-weight: 700;
 }
 
+/* --- solver outage ------------------------------------------------------- */
+
+/* Only ever in the layout while the solver is unreachable; the score sheet
+   gives up the height for it and takes it back on recovery. */
+#offline {
+    padding: .5em .8em;
+    border: 1px solid #f0c36d;
+    border-radius: 10px;
+    background: #fdf6e3;
+    color: #7a5b00;
+    font-size: clamp(.68rem, 1.55vh, .95rem);
+    font-weight: 600;
+    text-align: left;
+}
+
+#offline[hidden] {
+    display: none;
+}
+
 /* --- roll counters ------------------------------------------------------- */
 
 #rolls {
@@ -428,4 +447,172 @@ button:not(:disabled):active {
 #roll {
     padding: .6em;
     font-size: clamp(1rem, 2.6vh, 1.5rem);
+}
+
+/* --- post-game analysis -------------------------------------------------- */
+
+/* Sits over the game rather than inside its grid, and scrolls normally: unlike
+   the game, this screen has no reason to fit a single viewport. */
+#analysis {
+    position: fixed;
+    inset: 0;
+    /* Overrides the 820px cap every body child gets: without this the overlay
+       is only as wide as the game column and the board shows beside it. */
+    max-width: none;
+    z-index: 10;
+    overflow-y: auto;
+    background: #fff;
+    padding: clamp(12px, 3vw, 32px);
+}
+
+#analysis[hidden] {
+    display: none;
+}
+
+#analysis .sheet {
+    max-width: 760px;
+    margin: 0 auto;
+    text-align: left;
+}
+
+#analysis h2 {
+    margin: 0 0 .6em;
+    font-size: clamp(1.3rem, 4.5vw, 2rem);
+}
+
+#analysis h3 {
+    margin: 1.6em 0 .3em;
+    font-size: clamp(.95rem, 3vw, 1.15rem);
+}
+
+#analysis .hint,
+#analysis .warn,
+#analysis .clean,
+#analysis .loading {
+    margin: 0 0 .6em;
+    font-size: clamp(.72rem, 2.4vw, .85rem);
+    line-height: 1.45;
+    color: #5f6368;
+}
+
+#analysis .warn {
+    padding: .5em .7em;
+    border: 1px solid #f0c36d;
+    border-radius: 8px;
+    background: #fdf6e3;
+    color: #7a5b00;
+}
+
+/* Player and robot summaries, side by side until there is no room. */
+#analysis .cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+#analysis .card {
+    flex: 1 1 240px;
+    padding: .8em 1em;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--who);
+    border-radius: 10px;
+    background: var(--shade);
+}
+
+#analysis .card h3 {
+    margin: 0;
+    color: var(--who);
+}
+
+#analysis .final {
+    margin: .1em 0 .5em;
+    font-size: 2.2rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+#analysis dl {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .18em .8em;
+    margin: 0;
+    font-size: clamp(.72rem, 2.4vw, .85rem);
+}
+
+#analysis dt { color: #5f6368 }
+#analysis dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums }
+
+#analysis .identity {
+    margin: .7em 0 0;
+    padding-top: .5em;
+    border-top: 1px solid var(--line);
+    font-size: clamp(.7rem, 2.3vw, .8rem);
+    color: #5f6368;
+    font-variant-numeric: tabular-nums;
+}
+
+.chart {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.chart .grid {
+    stroke: #e8eaed;
+    stroke-width: 1;
+}
+
+.chart .tick {
+    fill: #80868b;
+    font: 11px system-ui, sans-serif;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3em 1.1em;
+    font-size: clamp(.68rem, 2.2vw, .78rem);
+    color: #5f6368;
+}
+
+.legend i {
+    display: inline-block;
+    width: 1.1em;
+    height: .28em;
+    margin-right: .4em;
+    border-radius: 2px;
+    vertical-align: middle;
+}
+
+.blunders {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: clamp(.72rem, 2.4vw, .85rem);
+}
+
+.blunders th,
+.blunders td {
+    padding: .4em .5em;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+}
+
+.blunders th {
+    color: #5f6368;
+    font-size: .9em;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.blunders .cost {
+    color: #d93025;
+    font-weight: 700;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+#again {
+    margin: 1.8em 0 1em;
+    padding: .7em 1.4em;
+    font-size: 1rem;
 }
