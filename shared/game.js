@@ -121,12 +121,24 @@ const placementsFor = side =>
 
 // --- solver -----------------------------------------------------------------
 
-// Everything that identifies a decision point to the solver.
+/* Everything that identifies a decision point to the solver.
+
+   `joker` says the all-alike box was filled FOR SCORE rather than zeroed, which
+   is what makes later all-alike rolls worth an extra bonus. The solver keeps
+   both cases as separate positions, so leaving it out does not merely lose the
+   bonus -- it asks about a different game, one where the box was zeroed. On
+   Yahtzee that is worth around 130 points at the moment a second Yahtzee lands,
+   and the robot has no reason to chase one. */
 const posOf = (side, rolls) => ({
     mask: side.mask, bonus: R.bonusTarget - side.target, rolls,
     id: R.rollId(G.dice),
+    joker: (R.jokerRule && side.alikeScored) ? 1 : 0,
 });
-const posKey = p => `${p.mask}|${p.bonus}|${p.rolls}|${p.id}`;
+
+// The joker flag has to be part of the cache key too: the same sheet reached
+// with the box scored and with it zeroed are different positions with different
+// answers, and without this one would be served from the other's cache entry.
+const posKey = p => `${p.mask}|${p.bonus}|${p.rolls}|${p.id}|${p.joker}`;
 
 /* Returns C + HOLDS floats: the EV of scoring each category, then the EV of
    each hold, indexed by a bitmask over the dice sorted by value. Each value
@@ -138,8 +150,11 @@ async function fetchEV(pos, track) {
     const tag = track && G.gameId
         ? `&g=${G.gameId}` + (G.lastHold >= 0 ? `&hold=${G.lastHold}` : '')
         : '';
+    // joker is only sent when set: the service rejects joker=1 on a sheet whose
+    // all-alike box is still open, and omitting it means the same as zero.
+    const joker = pos.joker ? '&joker=1' : '';
     const res = await fetch(SOLVER +
-        `/?table=${pos.mask}&bonus=${pos.bonus}&rolls=${pos.rolls}&id=${pos.id}${tag}`);
+        `/?table=${pos.mask}&bonus=${pos.bonus}&rolls=${pos.rolls}&id=${pos.id}${joker}${tag}`);
     if (!res.ok) throw new Error(`solver returned ${res.status}`);
     return [...new Float64Array(await res.arrayBuffer())];
 }
