@@ -3,49 +3,504 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Yatzy Solver</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kenneth Langedal</title>
+    <meta name="description" content="Kenneth Langedal — algorithm engineering postdoc at Heidelberg University.">
+    <link rel="stylesheet" href="/shared/home.css">
 </head>
 
+<!--
+    The site's front page. The three games live in their own folders:
+    /maxi/, /yatzy/, /yahtzee/.
+
+    LAYOUT
+    Two columns: a sidebar carrying the portrait, name, section links and
+    contacts, and a main column with the bio and everything else. The sidebar
+    sticks while you scroll on a wide screen and folds above the content on a
+    narrow one. No build step and no JavaScript: this file is served exactly
+    as written.
+
+    ADDING AN ENTRY
+    Every list is a <ul class="entries"> whose items share the same shape, and
+    the timeline down the left is drawn by CSS from the list itself, so nothing
+    needs adding for it. Only .what is required; drop any line you do not need.
+
+        <li>
+            <span class="when">Jul 2025</span>          <- right-hand column
+            <span class="what">Title of the thing</span>
+            <span class="who">Author, <b>Kenneth Langedal</b>, Author</span>
+            <span class="where">Venue name (ABBR 2025)</span>
+            <span class="links">
+                <a href="https://doi.org/10.4230/LIPIcs.SEA.2025.22">10.4230/LIPIcs.SEA.2025.22</a>
+                <a href="https://github.com/KennethLangedal/CHILS">github.com/KennethLangedal/CHILS</a>
+            </span>
+        </li>
+
+    Chips spell out the identifier rather than saying "DOI", so a reader can see
+    where a link goes before clicking it. A DOI, an arXiv id and a repo path are
+    each self-describing, so they need no label.
+
+    If you add a section, give its <h2> an id and add it to the sidebar nav.
+    Keep every list newest-first; nothing sorts them for you.
+
+    The phone number from the CV PDF is deliberately absent: an email address on
+    a public page collects spam, a phone number collects calls.
+-->
+
 <body>
-    <!-- The score rows, the dice and the roll chips are all built in game.js. -->
-    <div id="sheet-wrap">
-        <table id="sheet">
-            <thead>
-                <tr>
-                    <th><label><input type="checkbox" id="ev-toggle">Show EV</label></th>
-                    <th id="th-human">Player</th>
-                    <th id="th-robot">Robot</th>
-                </tr>
-            </thead>
-            <tbody id="rows"></tbody>
-        </table>
-    </div>
+<div class="page">
 
-    <div id="offline" hidden>Solver unreachable &mdash; EV unavailable and the robot is
-        playing without it. Your own score is unaffected.</div>
+    <aside class="side">
+        <img class="portrait" src="/img/portrait.jpg" width="640" height="640"
+             alt="Kenneth Langedal">
+        <div class="who-am-i">
+            <h1>Kenneth Langedal</h1>
+            <p class="role">Algorithm Engineering · PostDoc</p>
+            <p class="place">Heidelberg, Germany</p>
+        </div>
 
-    <div id="rolls">
-        <span>Player rolls <b id="human-chips"></b></span>
-        <span>Robot rolls <b id="robot-chips"></b></span>
-    </div>
+        <nav class="links-block">
+            <h2>Sections</h2>
+            <ul>
+                <li><a href="#games">Dice games</a></li>
+                <li><a href="#education">Education</a></li>
+                <li><a href="#competitions">Competitions</a></li>
+                <li><a href="#papers">Papers</a></li>
+                <li><a href="#teaching">Teaching</a></li>
+                <li><a href="#students">Students</a></li>
+                <li><a href="#experience">Work experience</a></li>
+                <li><a href="#service">Service</a></li>
+            </ul>
+        </nav>
 
-    <div id="dice"></div>
+        <nav class="links-block find">
+            <h2>Find me</h2>
+            <ul>
+                <li><a href="mailto:kenneth.langedal@informatik.uni-heidelberg.de">kenneth.langedal@informatik.uni-heidelberg.de</a></li>
+                <li><a href="https://github.com/KennethLangedal">github.com/KennethLangedal</a></li>
+                <li><a href="https://scholar.google.com/citations?user=_3-T-lMAAAAJ&amp;hl=en">Google Scholar</a></li>
+                <li><a href="https://orcid.org/0009-0001-6838-4640">ORCID</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-    <div id="ev-panel" hidden>
-        <div><small>Current hold</small><strong id="cur-ev">-</strong></div>
-        <div><small>Best hold</small><strong id="best-ev">-</strong><span id="best-dice"></span></div>
-        <button id="best-btn">Select best hold</button>
-    </div>
+    <main>
 
-    <button id="roll">Roll Dice</button>
+        <p class="bio">I am a postdoctoral fellow in Professor Christian Schulz's 
+            algorithm engineering group at Heidelberg University. My research 
+            focuses on making hard graph problems tractable in practice using data 
+            reduction rules, local search, and graph neural networks. Some of 
+            the problems I have worked on include Independent Set, Dominating 
+            Set, Graph Coloring, and Graph Partitioning.</p>
 
-    <div id="analysis" hidden></div>
+        <h2 id="games">Solved solitaire dice games</h2>
 
-    <script src="data.js"></script>
-    <script src="analysis.js"></script>
-    <script src="game.js"></script>
+        <p>Play against a computer opponent who has the solitaire game solved 
+            exactly. Every expected value shown is a lookup in a precomputed 
+            table covering every reachable position. All games utilize the free 
+            variant where cells can be filled in any order.</p>
+
+        <div class="games">
+            <a class="game" href="/maxi/">
+                <span class="dice">⚄⚅</span>
+                <b>Maxi Yatzy</b>
+                <small>Six dice, 20 categories. Unused rolls carry over to later
+                    turns.</small>
+            </a>
+            <a class="game" href="/yatzy/">
+                <span class="dice">⚃</span>
+                <b>Yatzy</b>
+                <small>The Scandinavian five-dice game, 15 categories.</small>
+            </a>
+            <a class="game" href="/yahtzee/">
+                <span class="dice">⚂</span>
+                <b>Yahtzee</b>
+                <small>The US five-dice game, 13 categories, with the joker
+                    rule.</small>
+            </a>
+        </div>
+
+        <p class="note">After each game, you get a breakdown showing your 
+            performance against the perfect solitaire strategy.</p>
+
+        <h2 id="education">Education</h2>
+
+        <ul class="entries">
+            <li>
+                <span class="when">2020 – 2024</span>
+                <span class="what">Ph.D. in Computer Science</span>
+                <span class="where">University of Bergen. Thesis
+                    <em>Graph Neural Networks in Algorithm Engineering</em>,
+                    supervised by Prof. Dr. Fredrik Manne</span>
+                <span class="links">
+                    <a href="https://hdl.handle.net/11250/3184216">hdl:11250/3184216</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2018 – 2020</span>
+                <span class="what">M.Sc. Software Engineering</span>
+                <span class="where">University of Bergen and Western Norway University of Applied Sciences. Grade A</span>
+            </li>
+            <li>
+                <span class="when">2015 – 2018</span>
+                <span class="what">B.Sc. Computing</span>
+                <span class="where">Western Norway University of Applied Sciences.</span>
+            </li>
+        </ul>
+
+        <h2 id="competitions">Competitions</h2>
+
+        <!-- Results are marked up rather than written out, so a placement is a
+             badge you can see at a glance:
+
+                 <span class="results">
+                     <span class="result"><b class="medal m1">1st</b> which track</span>
+                 </span>
+
+             m1/m2/m3 are gold, silver and bronze. Anything outside the top
+             three uses <b class="medal">4th</b> with no m-class, which renders
+             as a plain outline. -->
+        <ul class="entries">
+            <li>
+                <span class="when">2026</span>
+                <span class="what">SISAP Indexing Challenge</span>
+                <span class="results">
+                    <span class="result"><b class="medal m2">2nd</b> Task 1 – All-k-NN (Preliminary results)</span>
+                </span>
+                <span class="links">
+                    <a href="https://sisap-challenges.github.io/sisap26-leaderboard/leaderboard.html">Leaderboard</a>
+                    <a href="https://github.com/henrixapp/sisap2026-plain-local-search">github.com/henrixapp/sisap2026-plain-local-search</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2025</span>
+                <span class="what">PACE Challenge — Dominating Set &amp; Hitting Set</span>
+                <span class="results">
+                    <span class="result"><b class="medal">5th</b> Heuristic Track – Dominating Set</span>
+                    <span class="result"><b class="medal">5th</b> Heuristic Track – Hitting Set</span>
+                </span>
+                <span class="links">
+                    <a href="https://pacechallenge.org/2025/results/">Leaderboard</a>
+                    <a href="https://github.com/KennethLangedal/PACE2025">github.com/KennethLangedal/PACE2025</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2024</span>
+                <span class="what">PACE Challenge — One-sided Crossing Minimization
+                    minimization</span>
+                <span class="results">
+                    <span class="result"><b class="medal m1">1st</b> Parameterized Track</span>
+                    <span class="result"><b class="medal m2">2nd</b> Heuristic Track</span>
+                </span>
+                <span class="links">
+                    <a href="https://pacechallenge.org/2024/results/">Leaderboard</a>
+                    <a href="https://github.com/KennethLangedal/PACE2024-UiB">github.com/KennethLangedal/PACE2024-UiB</a>
+                    <a href="https://doi.org/10.4230/LIPIcs.IPEC.2024.34">10.4230/LIPIcs.IPEC.2024.34</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2023</span>
+                <span class="what">PACE Challenge — Twinwidth</span>
+                <span class="results">
+                    <span class="result"><b class="medal m2">2nd</b> Heuristic Track</span>
+                </span>
+                <span class="links">
+                    <a href="https://pacechallenge.org/2023/results/">Leaderboard</a>
+                    <a href="https://bitbucket.org/Petra2334/pace2023-code/src/master/Zygosity_Heuristic/">bitbucket/Zygosity</a>
+                    <a href="https://doi.org/10.4230/LIPIcs.IPEC.2023.39">10.4230/LIPIcs.IPEC.2023.39</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2022</span>
+                <span class="what">PACE Challenge — Directed Feedback Vertex Set</span>
+                <span class="results">
+                    <span class="result"><b class="medal">4th</b> Heuristic Track</span>
+                </span>
+                <span class="links">
+                    <a href="https://pacechallenge.org/2022/results/">Leaderboard</a>
+                    <a href="https://github.com/KennethLangedal/DFVS">github.com/KennethLangedal/DFVS</a>
+                </span>
+            </li>
+        </ul>
+
+        <h2 id="papers">Papers</h2>
+
+        <ul class="entries">
+            <li>
+                <span class="when">2026</span>
+                <span class="what">Engineering Learned Heuristics to Improve
+                    Clustering for Multilevel Graph Partitioning</span>
+                <span class="who">Simeon Schrape, Nikolai Maas,
+                    <b>Kenneth Langedal</b>, Daniel Seemaier</span>
+                <span class="where">International Symposium on Experimental
+                    Algorithms (SEA 2026)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.SEA.2026.25">10.4230/LIPIcs.SEA.2026.25</a>
+                    <a href="https://github.com/kahypar/mt-kahypar/tree/sea2026">github.com/kahypar/mt-kahypar/tree/sea2026</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2026</span>
+                <span class="what">A Comprehensive Survey of Data Reduction Rules
+                    for the Maximum Weighted Independent Set Problem</span>
+                <span class="who">Ernestine Großmann,
+                    <b>Kenneth Langedal</b>, Christian Schulz</span>
+                <span class="where">Technical report</span>
+                <span class="links">
+                    <a href="https://arxiv.org/abs/2412.09303">arXiv:2412.09303</a>
+                    <a href="https://github.com/KarlsruheMIS/DataReductions">github.com/KarlsruheMIS/DataReductions</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2025</span>
+                <span class="what">Accelerating Reductions Using Graph Neural
+                    Networks for the Maximum Weight Independent Set Problem</span>
+                <span class="who">Ernestine Großmann,
+                    <b>Kenneth Langedal</b>, Christian Schulz</span>
+                <span class="where">Conference on Applied and Computational
+                    Discrete Algorithms (ACDA 2025)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.1137/1.9781611979084.12">10.1137/1.9781611979084.12</a>
+                    <a href="https://github.com/KarlsruheMIS/DataReductions">github.com/KarlsruheMIS/DataReductions</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2025</span>
+                <span class="what">Concurrent Iterated Local Search for the
+                    Maximum Weight Independent Set Problem</span>
+                <span class="who">Ernestine Großmann,
+                    <b>Kenneth Langedal</b>, Christian Schulz</span>
+                <span class="where">International Symposium on Experimental
+                    Algorithms (SEA 2025)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.SEA.2025.22">10.4230/LIPIcs.SEA.2025.22</a>
+                    <a href="https://github.com/KarlsruheMIS/CHILS">github.com/KarlsruheMIS/CHILS</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2025</span>
+                <span class="what">Graph Neural Networks as Ordering Heuristics
+                    for Parallel Graph Coloring</span>
+                <span class="who"><b>Kenneth Langedal</b>, Fredrik Manne</span>
+                <span class="where">Symposium on Algorithm Engineering and
+                    Experiments (ALENEX 2025)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.1137/1.9781611978339.5">10.1137/1.9781611978339.5</a>
+                    <a href="https://github.com/KennethLangedal/GNN-COLORING">github.com/KennethLangedal/GNN-COLORING</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2024</span>
+                <span class="what">Targeted Branching for the Maximum Independent
+                    Set Problem Using Graph Neural Networks</span>
+                <span class="who"><b>Kenneth Langedal</b>, Demian Hespe,
+                    Peter Sanders</span>
+                <span class="where">International Symposium on Experimental
+                    Algorithms (SEA 2024)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.SEA.2024.20">10.4230/LIPIcs.SEA.2024.20</a>
+                    <a href="https://github.com/KennethLangedal/CutBranching-GNN">github.com/KennethLangedal/CutBranching-GNN</a>
+                    <a href="https://github.com/KennethLangedal/vc-satreduce-gnn">github.com/KennethLangedal/vc-satreduce-gnn</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2022</span>
+                <span class="what">Efficient Minimum Weight Vertex Cover
+                    Heuristics using Graph Neural Networks</span>
+                <span class="who"><b>Kenneth Langedal</b>, Johannes Langguth,
+                    Fredrik Manne, Daniel Thilo Schroeder</span>
+                <span class="where">International Symposium on Experimental
+                    Algorithms (SEA 2022)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.SEA.2022.12">10.4230/LIPIcs.SEA.2022.12</a>
+                    <a href="https://github.com/KennethLangedal/GNN-MWVC">github.com/KennethLangedal/GNN-MWVC</a>
+                </span>
+            </li>
+        </ul>
+
+        <h3>Solver descriptions and reports</h3>
+
+        <ul class="entries">
+            <li>
+                <span class="when">2024</span>
+                <span class="what">PACE Solver Description: LUNCH — Linear
+                    Uncrossing Heuristics</span>
+                <span class="who"><b>Kenneth Langedal</b>, Matthias Bentert,
+                    Thorgal Blanco, Pål Grønås Drange</span>
+                <span class="where">International Symposium on Parameterized and
+                    Exact Computation (IPEC 2024)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.IPEC.2024.34">10.4230/LIPIcs.IPEC.2024.34</a>
+                    <a href="https://github.com/KennethLangedal/PACE2024-UiB">github.com/KennethLangedal/PACE2024-UiB</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2024</span>
+                <span class="what">GNNs for smaller kernels, finding the one rule
+                    to reduce them all</span>
+                <span class="who"><b>Kenneth Langedal</b>, Fredrik Manne,
+                    Ernestine Großmann, Christian Schulz, Matthias Schimek,
+                    Fabian Brandt-Tumescheit</span>
+                <span class="where">Scalable Graph Mining and Learning
+                    (Dagstuhl Seminar 23491)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/DagRep.13.12.1">10.4230/DagRep.13.12.1</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">2023</span>
+                <span class="what">PACE Solver Description: Zygosity</span>
+                <span class="who">Emmanuel Arrighi, Pål Grønås Drange,
+                    <b>Kenneth Langedal</b>, Farhad Vadiee, Martin Vatshelle,
+                    Petra Wolf</span>
+                <span class="where">International Symposium on Parameterized and
+                    Exact Computation (IPEC 2023)</span>
+                <span class="links">
+                    <a href="https://doi.org/10.4230/LIPIcs.IPEC.2023.39">10.4230/LIPIcs.IPEC.2023.39</a>
+                    <a href="https://bitbucket.org/Petra2334/pace2023-code/src/master/Zygosity_Heuristic/">bitbucket/Zygosity</a>
+                </span>
+            </li>
+        </ul>
+
+        <h2 id="teaching">Teaching</h2>
+
+        <ul class="entries">
+            <li>
+                <span class="when">Apr 2026 – Jul 2026</span>
+                <span class="what">Algorithm Engineering</span>
+                <span class="where">Master-level lecture. Co-instructed with
+                    Ernestine Großmann and Christian Schulz, shared equally</span>
+            </li>
+            <li>
+                <span class="when">Oct 2025 – Feb 2026</span>
+                <span class="what">Algorithms and Data Structures II</span>
+                <span class="where">Bachelor-level lecture. Co-instructed with
+                    Ernestine Großmann, shared equally</span>
+            </li>
+            <li>
+                <span class="when">Apr 2025 – Jul 2025</span>
+                <span class="what">Distributed and Parallel Algorithms</span>
+                <span class="where">Master-level lecture. Co-instructed with
+                    Ernestine Großmann, shared equally</span>
+            </li>
+        </ul>
+
+        <h2 id="students">Co-supervised students</h2>
+
+        <ul class="entries">
+            <li>
+                <span class="when">Sep 2025</span>
+                <span class="what">Engineering Fast Maximum Flows to Speed Up
+                    Critical Weighted Independent Set Reductions</span>
+                <span class="where">Markus Everling, bachelor thesis</span>
+                <span class="links">
+                    <a href="https://schulzchristian.github.io/thesis/ba_everling.pdf">PDF</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">Sep 2025</span>
+                <span class="what">Engineering Good Upper Bounds for the Maximum
+                    Weight Independent Set Problem</span>
+                <span class="where">Raphael Heuberger, bachelor thesis</span>
+                <span class="links">
+                    <a href="https://schulzchristian.github.io/thesis/ba_heuberger.pdf">PDF</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">Apr 2025</span>
+                <span class="what">Combining Known Techniques to Solve the
+                    Dominating Set Problem in Practice</span>
+                <span class="where">Marlon Dittes, bachelor thesis</span>
+                <span class="links">
+                    <a href="https://schulzchristian.github.io/thesis/ba_dittes.pdf">PDF</a>
+                </span>
+            </li>
+            <li>
+                <span class="when">Mar 2025</span>
+                <span class="what">Improving Coarsening for Multilevel Graph
+                    Partitioning via Machine Learning</span>
+                <span class="where">Simeon Schrape, bachelor thesis</span>
+                <span class="links">
+                    <a href="https://publikationen.bibliothek.kit.edu/1000187811/170139377">PDF</a>
+                </span>
+            </li>
+        </ul>
+
+        <h2 id="experience">Work experience</h2>
+
+        <ul class="entries">
+            <li>
+                <span class="when">Mar 2025 – now</span>
+                <span class="what">Heidelberg University</span>
+                <span class="where">Postdoctoral fellow, algorithm engineering
+                    group of Prof. Dr. Christian Schulz</span>
+            </li>
+            <li>
+                <span class="when">Jan 2025</span>
+                <span class="what">University of Bergen</span>
+                <span class="where">External examiner for INF113 Fall-2024</span>
+            </li>
+            <li>
+                <span class="when">Aug 2016 – Aug 2024</span>
+                <span class="what">Western Norway University of Applied Sciences</span>
+                <span class="where">External examiner for ING202 Fall-2024, DAT102
+                    Spring-2024 and ING201 Spring-2023. Group leader in DAT100,
+                    DAT103, DAT154, DAT158 and MAT108 from 2016 to 2020</span>
+            </li>
+            <li>
+                <span class="when">Aug 2018 – Jun 2020</span>
+                <span class="what">Hop Oppveksttun middle school</span>
+                <span class="where">Teacher for the elective programming course,
+                    9th and 10th grade</span>
+            </li>
+            <li>
+                <span class="when">Feb 2019 – Aug 2019</span>
+                <span class="what">Ai Innovation Center AS</span>
+                <span class="where">Consultant</span>
+            </li>
+            <li>
+                <span class="when">Jun 2017 – Aug 2018</span>
+                <span class="what">OneSubsea</span>
+                <span class="where">Summer internships doing software engineering</span>
+            </li>
+            <li>
+                <span class="when">Aug 2013 – Oct 2018</span>
+                <span class="what">Mildeheimen nursing home</span>
+                <span class="where">Part-time (13%) over five years as a nursing
+                    assistant</span>
+            </li>
+            <li>
+                <span class="when">Jul 2014 – Jul 2015</span>
+                <span class="what">Royal Norwegian Navy</span>
+                <span class="where">Conscription</span>
+            </li>
+        </ul>
+
+        <h2 id="service">Service</h2>
+
+        <dl class="facts">
+            <dt>Reviewer</dt>
+            <dd>SOFSEM 2026, IPEC 2025, ESA 2025, SWAT 2024, Nature Communications</dd>
+
+            <dt>Programme committee</dt>
+            <dd>CompAI 2025</dd>
+
+            <dt>Funding</dt>
+            <dd>NORA National Research School for AI, project 331723, 30 000 NOK<br>
+                Meltzer Research Fund, project 104066111, 18 700 NOK</dd>
+
+            <dt>Doctoral coursework</dt>
+            <dd>Supercomputing Algorithms, Parallel Programming, Deep Learning</dd>
+
+            <dt>Languages</dt>
+            <dd>C and C++ with OpenMP/MPI by preference. Also x86 assembly, Java,
+                C#, JavaScript, Python, SQL and Haskell</dd>
+        </dl>
+
+    </main>
+
+</div>
+
 </body>
 
 </html>

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Yatzy Solver</title>
+    <meta name="description" content="The Scandinavian five-dice game, 15 categories. Play against a robot that knows the optimal strategy.">
+    <link rel="stylesheet" href="/shared/styles.css">
+</head>
+
+<body>
+    <!-- The score rows, the dice and the roll chips are all built in game.js,
+         from the tables in rules.js. Only the VARIANT line at the bottom
+         differs between the three games.
+
+         The page is sized to fill the viewport exactly, so there is no room for
+         a nav bar; the link home shares the score sheet's own header row. The
+         two elements below sit on ONE line on purpose -- stacking them costs a
+         score row on a phone.
+
+         The EV checkbox is deliberately hidden. See revealEV() in game.js for
+         the two gestures that reach it, and #brand label in styles.css for why
+         it is hidden explicitly rather than with the hidden attribute. -->
+    <div id="sheet-wrap">
+        <table id="sheet">
+            <thead>
+                <tr>
+                    <th id="brand"><a href="/">Kenneth Langedal</a><span id="variant-name">Yatzy</span><label hidden><input type="checkbox" id="ev-toggle"></label></th>
+                    <th id="th-human">Player</th>
+                    <th id="th-robot">Robot</th>
+                </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+        </table>
+    </div>
+
+    <div id="offline" hidden>Solver unreachable &mdash; EV unavailable and the robot is
+        playing without it. Your own score is unaffected.</div>
+
+    <div id="rolls">
+        <span>Player rolls <b id="human-chips"></b></span>
+        <span>Robot rolls <b id="robot-chips"></b></span>
+    </div>
+
+    <div id="dice"></div>
+
+    <div id="ev-panel" hidden>
+        <div><small>Current hold</small><strong id="cur-ev">-</strong></div>
+        <div><small>Best hold</small><strong id="best-ev">-</strong><span id="best-dice"></span></div>
+        <button id="best-btn">Select best hold</button>
+    </div>
+
+    <button id="roll">Roll Dice</button>
+
+    <div id="analysis" hidden></div>
+
+    <div id="toast" hidden></div>
+
+    <script>const VARIANT = 'yatzy';</script>
+    <script src="/shared/config.js"></script>
+    <script src="/shared/rules.js"></script>
+    <script src="/shared/analysis.js"></script>
+    <script src="/shared/game.js"></script>
+</body>
+
+</html>

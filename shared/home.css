@@ -1,0 +1,545 @@
+/* The home page only. The game pages use styles.css, which is a full-height
+   grid tuned to fit a score sheet exactly; this one is an ordinary document
+   that scrolls.
+
+   Layout: a fixed-width sidebar carrying the portrait, name, section links and
+   contacts, beside a flexible main column. The sidebar sticks while you scroll
+   on a wide screen and folds above the content on a narrow one.
+
+   Content is driven off three repeated structures, so adding an entry never
+   needs a new rule:
+     ul.entries    a timeline of things -- title, authors, venue, optional date
+     span.links    a row of chips spelling out DOIs, arXiv ids and repo paths
+     dl.facts      label and value pairs for things that are not dated */
+
+:root {
+    --blue: #1a73e8;
+    --ink: #202124;
+    --muted: #5f6368;
+    --faint: #80868b;
+    --line: #e8eaed;
+    --rail: #dadce0;
+    --shade: #f8f9fa;
+    --bg: #fff;
+
+    /* Medal colours for competition placements. Kept as variables so the dark
+       scheme can restate them: a pale gold that reads on white turns into an
+       unreadable smear on near-black. */
+    --gold-ink: #7a5800;
+    --gold-bg: #fdf3d5;
+    --gold-edge: #edd9a3;
+    --silver-ink: #55595e;
+    --silver-bg: #f1f3f4;
+    --silver-edge: #d5d9dd;
+    --bronze-ink: #7d4a22;
+    --bronze-bg: #f8e8db;
+    --bronze-edge: #e3c3a6;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: clamp(20px, 4vw, 48px) clamp(16px, 4vw, 40px) 64px;
+    font-family: system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+}
+
+a {
+    color: var(--blue);
+}
+
+p {
+    margin: 0 0 1em;
+}
+
+.page {
+    display: grid;
+    grid-template-columns: 228px minmax(0, 1fr);
+    gap: clamp(28px, 5vw, 56px);
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* --- sidebar -------------------------------------------------------------- */
+
+.side {
+    /* Follows you down the page, but only where there is room for it to. */
+    position: sticky;
+    top: clamp(20px, 4vw, 48px);
+    align-self: start;
+    /* A tall sidebar must be able to scroll on its own rather than having its
+       lower half become unreachable. */
+    max-height: calc(100vh - 2 * clamp(20px, 4vw, 48px));
+    overflow-y: auto;
+}
+
+.portrait {
+    display: block;
+    width: 100%;
+    max-width: 160px;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 12px;
+    background: var(--shade);
+}
+
+h1 {
+    font-size: 21px;
+    line-height: 1.25;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    margin: .85em 0 .25em;
+}
+
+.role {
+    font-size: 14px;
+    margin: 0;
+}
+
+.place {
+    font-size: 14px;
+    color: var(--muted);
+    margin: 0;
+}
+
+/* Both sidebar link lists: sections, and where to find me. */
+.links-block {
+    margin-top: 1.7em;
+}
+
+/* Same treatment as a main-column heading -- small caps over a rule line -- so
+   the sidebar blocks read as sections rather than as loose labels. */
+.links-block h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--faint);
+    margin: 0 0 .6em;
+    padding-bottom: .4em;
+    border-bottom: 1px solid var(--line);
+}
+
+.links-block ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+}
+
+.links-block li {
+    margin-bottom: .3em;
+}
+
+.links-block a {
+    text-decoration: none;
+}
+
+.links-block a:hover {
+    text-decoration: underline;
+}
+
+/* The email and repo links are spelled out in full, which is wider than the
+   sidebar. Break them mid-string rather than letting them overflow. */
+.find {
+    font-size: 13.5px;
+}
+
+.find a {
+    overflow-wrap: anywhere;
+}
+
+/* --- main column ---------------------------------------------------------- */
+
+.bio {
+    margin-top: 0;
+    font-size: 17px;
+    line-height: 1.65;
+}
+
+main h2 {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--faint);
+    margin: 2.5em 0 1em;
+    padding-bottom: .45em;
+    border-bottom: 1px solid var(--line);
+    /* So a jump link does not park the heading under the viewport edge. */
+    scroll-margin-top: 16px;
+}
+
+main h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    margin: 1.9em 0 .8em;
+}
+
+/* --- the games ------------------------------------------------------------ */
+
+.games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin: 1.2em 0;
+}
+
+.game {
+    display: block;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    background: var(--shade);
+    transition: border-color .15s, transform .15s;
+}
+
+.game:hover {
+    border-color: var(--blue);
+    transform: translateY(-2px);
+}
+
+.game b {
+    display: block;
+    font-size: 1.02em;
+    color: var(--blue);
+}
+
+.game small {
+    display: block;
+    margin-top: .2em;
+    color: var(--muted);
+    line-height: 1.45;
+    font-size: .85em;
+}
+
+.game .dice {
+    float: right;
+    font-size: 1.5em;
+    line-height: 1;
+    color: var(--ink);
+    opacity: .3;
+}
+
+.note {
+    color: var(--muted);
+    font-size: .9em;
+}
+
+/* --- entry timeline ------------------------------------------------------- */
+
+/* A rail down the left with a ring on it per entry. The rail is each item's own
+   left border, so consecutive items join into a continuous line and nothing has
+   to know how many entries there are. The last item's border goes transparent
+   so the line stops at the final ring instead of trailing past it. */
+.entries {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.entries li {
+    position: relative;
+    padding: 0 0 1.5em 24px;
+    border-left: 2px solid var(--rail);
+    /* Date in a narrow right-hand column; items with no .when leave it empty. */
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 1.2em;
+}
+
+.entries li:last-child {
+    border-left-color: transparent;
+    padding-bottom: 0;
+}
+
+/* box-sizing is border-box, so the ring is 12px across including its border:
+   left -7px puts its centre at -1px, which is the centre of the 2px rail. */
+.entries li::before {
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: .34em;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--rail);
+}
+
+/* Dots fill only under the cursor.
+
+   An earlier version also tracked scroll position, which was a mistake: the
+   rail highlight jumped a whole entry at a time, and hovering fought with it,
+   so the marker could end up somewhere you were neither pointing at nor
+   reading. Following the cursor is the only signal here, and it needs no
+   JavaScript. */
+.entries li::before {
+    transition: background .15s, border-color .15s;
+}
+
+.entries li:hover::before {
+    background: var(--blue);
+    border-color: var(--blue);
+}
+
+.entries .when {
+    grid-column: 2;
+    grid-row: 1;
+    color: var(--faint);
+    font-size: .85em;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    text-align: right;
+    padding-top: .2em;
+}
+
+.entries .what {
+    grid-column: 1;
+    grid-row: 1;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.entries .who,
+.entries .where,
+.entries .links {
+    grid-column: 1;
+}
+
+.entries .who {
+    font-size: .93em;
+    color: var(--muted);
+    margin-top: .15em;
+}
+
+.entries .who b {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.entries .where {
+    font-size: .9em;
+    color: var(--faint);
+    margin-top: .1em;
+}
+
+/* --- competition placements ----------------------------------------------- */
+
+/* A placement is a badge rather than a sentence, so a reader scanning the page
+   sees the results without reading any of it. Only the top three are coloured;
+   everything else gets a plain outline, which keeps gold meaning something. */
+.results {
+    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .3em;
+    margin-top: .45em;
+}
+
+.result {
+    display: flex;
+    align-items: center;
+    gap: .55em;
+    font-size: .9em;
+    color: var(--muted);
+}
+
+.medal {
+    flex: none;
+    min-width: 2.9em;
+    padding: .12em .5em;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-size: .82em;
+    font-weight: 700;
+    letter-spacing: .02em;
+    text-align: center;
+    color: var(--faint);
+    background: var(--bg);
+}
+
+.medal.m1 {
+    color: var(--gold-ink);
+    background: var(--gold-bg);
+    border-color: var(--gold-edge);
+}
+
+.medal.m2 {
+    color: var(--silver-ink);
+    background: var(--silver-bg);
+    border-color: var(--silver-edge);
+}
+
+.medal.m3 {
+    color: var(--bronze-ink);
+    background: var(--bronze-bg);
+    border-color: var(--bronze-edge);
+}
+
+/* --- identifier chips ----------------------------------------------------- */
+
+/* Chips carry the identifier itself rather than the word "DOI", so a reader can
+   see where a link goes before following it. Tabular figures keep the many
+   numeric ids from looking ragged next to each other. */
+.links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4em;
+    margin-top: .55em;
+}
+
+.links a {
+    display: inline-block;
+    max-width: 100%;
+    padding: .12em .65em;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    font-size: .78em;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .01em;
+    text-decoration: none;
+    color: var(--muted);
+    background: var(--bg);
+    overflow-wrap: anywhere;
+    transition: border-color .15s, color .15s, background .15s;
+}
+
+.links a:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: var(--shade);
+}
+
+/* --- label and value facts ------------------------------------------------ */
+
+.facts {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: .55em 1.4em;
+    margin: 0;
+}
+
+.facts dt {
+    font-weight: 600;
+    font-size: .92em;
+}
+
+.facts dd {
+    margin: 0;
+    font-size: .92em;
+    color: var(--muted);
+}
+
+/* --- narrow screens ------------------------------------------------------- */
+
+/* Fold the sidebar into a header: portrait left, name beside it, then the two
+   link lists side by side. Sticky is dropped -- a sticky header on a phone
+   costs exactly the screen space it is meant to save. */
+@media (max-width: 760px) {
+    .page {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.8em;
+    }
+
+    /* Auto-placement handles this: the portrait and the name take the two
+       columns of row 1, and each link block then spans the full width on a row
+       of its own. Named areas were a trap here -- both navs would have claimed
+       the same one and drawn on top of each other. */
+    .side {
+        position: static;
+        max-height: none;
+        overflow: visible;
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 0 18px;
+    }
+
+    .portrait {
+        width: clamp(84px, 22vw, 116px);
+        max-width: none;
+    }
+
+    h1 {
+        margin-top: 0;
+        font-size: clamp(22px, 6vw, 28px);
+    }
+
+    .links-block {
+        grid-column: 1 / -1;
+        margin-top: 1.3em;
+    }
+
+    .links-block ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .3em 1.1em;
+    }
+
+    .links-block li {
+        margin-bottom: 0;
+    }
+
+    .find {
+        margin-top: .9em;
+    }
+}
+
+@media (max-width: 520px) {
+    .entries li {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .entries .when {
+        grid-column: 1;
+        grid-row: auto;
+        order: -1;
+        text-align: left;
+        padding-top: 0;
+        margin-bottom: .15em;
+    }
+
+    .facts {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+    }
+
+    .facts dt {
+        margin-top: .9em;
+    }
+}
+
+/* --- dark mode ------------------------------------------------------------ */
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --ink: #e8eaed;
+        --muted: #9aa0a6;
+        --faint: #80868b;
+        --line: #3c4043;
+        --rail: #45484c;
+        --shade: #26282b;
+        --bg: #17181a;
+        --blue: #8ab4f8;
+
+        --gold-ink: #f0cf7a;
+        --gold-bg: #3a3016;
+        --gold-edge: #5c4c20;
+        --silver-ink: #cdd2d7;
+        --silver-bg: #2e3134;
+        --silver-edge: #464a4e;
+        --bronze-ink: #e0aa7f;
+        --bronze-bg: #3a2a1d;
+        --bronze-edge: #57402c;
+    }
+}

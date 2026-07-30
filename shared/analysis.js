@@ -20,29 +20,50 @@
    playing the scoreboard -- the solver maximises points, not win chance, so
    correctly taking variance when behind is charged here as a mistake. */
 
-const PLAYER_COLOUR = { human: '#1a73e8', robot: '#d93025' };
+/* Chart series colours come from the stylesheet rather than living here, so the
+   charts follow the light/dark scheme along with everything else. The fallbacks
+   are the light-mode values, for the case where the variables are missing. */
+const cssVar = (name, fallback) =>
+    getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+
+const PLAYER_COLOUR = {
+    human: cssVar('--chart-human', '#1a73e8'),
+    robot: cssVar('--chart-robot', '#d93025'),
+};
 const CHART = { w: 700, h: 210, l: 52, r: 14, t: 12, b: 28 };
 
 const popcount = m => { let n = 0; while (m) { m &= m - 1; n++; } return n; };
 const signed = v => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1);
 
-// Best value available at a node, over legal options only: unfilled categories
-// always, holds only while a reroll remains.
+/* Best value available at a node, over legal options only: open categories
+   always, holds only while a reroll remains. This re-derives legality from the
+   position rather than trusting the solver's own -Infinity padding, so it stays
+   correct if the service ever changes how it marks unplayable cells. */
 function bestValue(e) {
     let best = -Infinity;
-    for (let i = 0; i < CATEGORIES; i++)
+    for (let i = 0; i < C; i++)
         if (!(e.pos.mask >> i & 1)) best = Math.max(best, e.ev[i]);
     if (e.pos.rolls > 0)
-        for (let i = 20; i < 84; i++) best = Math.max(best, e.ev[i]);
+        for (let m = 0; m < HOLDS; m++) best = Math.max(best, e.ev[holdAt(m)]);
     return best + e.score;
 }
 
+function bestOption(e) {
+    let best = -1, top = -Infinity;
+    for (let i = 0; i < C; i++)
+        if (!(e.pos.mask >> i & 1) && e.ev[i] > top) { top = e.ev[i]; best = i; }
+    if (e.pos.rolls > 0)
+        for (let m = 0; m < HOLDS; m++)
+            if (e.ev[holdAt(m)] > top) { top = e.ev[holdAt(m)]; best = holdAt(m); }
+    return best;
+}
+
 const describe = (e, opt) => {
-    if (opt < CATEGORIES) return CATS[opt][0];
-    const mask = opt - 20;
-    if (!mask) return 'reroll all six';
+    if (opt < C) return R.cells[opt].label;
+    const mask = opt - C;
+    if (!mask) return `reroll all ${N}`;
     const kept = [...e.dice].sort((a, b) => a - b).filter((_, i) => mask >> i & 1);
-    return (kept.length === 6 ? 'keep all' : 'keep') + ' ' + kept.map(glyph).join('');
+    return (kept.length === N ? 'keep all' : 'keep') + ' ' + kept.map(glyph).join('');
 };
 
 // Walks one player's decisions in order and prices each one.
@@ -52,7 +73,7 @@ function priceDecisions(who) {
     const turnOf = e => popcount(e.pos.mask);
 
     // A turn holds as many decisions as it took rolls. Spreading them across
-    // the turn puts both players on the same 0..20 axis even though they take
+    // the turn puts both players on the same axis even though they take
     // different numbers of rolls.
     const perTurn = new Map(), placed = new Map();
     for (const e of nodes) perTurn.set(turnOf(e), (perTurn.get(turnOf(e)) || 0) + 1);
@@ -93,9 +114,13 @@ function lineChart(series, yFmt = v => v.toFixed(0)) {
         <text class="tick" x="${l - 6}" y="${(py(v) + 3.5).toFixed(1)}"
         text-anchor="end">${yFmt(v)}</text>`).join('');
 
-    const xTicks = [0, 5, 10, 15, 20].filter(v => v >= x0 && v <= x1).map(v =>
-        `<text class="tick" x="${px(v).toFixed(1)}" y="${h - 8}"
-         text-anchor="middle">${v}</text>`).join('');
+    // A tick every five turns, whatever the variant's category count.
+    const step = 5;
+    const xTicks = [];
+    for (let v = 0; v <= C; v += step)
+        if (v >= x0 && v <= x1)
+            xTicks.push(`<text class="tick" x="${px(v).toFixed(1)}" y="${h - 8}"
+                text-anchor="middle">${v}</text>`);
 
     const lines = series.map(s => {
         const d = s.points.map((p, i) =>
@@ -105,7 +130,7 @@ function lineChart(series, yFmt = v => v.toFixed(0)) {
             ${s.dash ? 'opacity=".65"' : ''}/>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${w} ${h}" class="chart">${grid}${xTicks}${lines}</svg>`;
+    return `<svg viewBox="0 0 ${w} ${h}" class="chart">${grid}${xTicks.join('')}${lines}</svg>`;
 }
 
 const legend = items => `<div class="legend">` + items.map(i =>
@@ -117,14 +142,19 @@ const legend = items => `<div class="legend">` + items.map(i =>
 function summaryCard(who, priced) {
     const side = G[who];
     const final = side.score + side.bonus;
-    const par = priced.length ? priced[0].best : final;
-    const luck = priced.reduce((t, d) => t + d.luck, 0);
+    // Par is the value of the game before any dice are thrown, which the server
+    // hands over with the game id. Falling back to the first priced decision
+    // keeps the old behaviour when tracking is unavailable -- but then the very
+    // first roll's luck sits inside par instead of being counted.
+    const par = G.startEV != null ? G.startEV : (priced.length ? priced[0].best : final);
+    const opening = (G.startEV != null && priced.length) ? priced[0].best - G.startEV : 0;
+    const luck = opening + priced.reduce((t, d) => t + d.luck, 0);
     const cost = priced.reduce((t, d) => t + d.cost, 0);
     return `<div class="card" style="--who:${PLAYER_COLOUR[who]}">
         <h3>${who === 'human' ? 'You' : 'Robot'}</h3>
         <p class="final">${final}</p>
         <dl>
-            <dt>Par at first roll</dt><dd>${par.toFixed(1)}</dd>
+            <dt>Par</dt><dd>${par.toFixed(1)}</dd>
             <dt>Luck</dt><dd>${signed(luck)}</dd>
             <dt>Lost to decisions</dt><dd>${cost < .05 ? '0.0' : '−' + cost.toFixed(1)}</dd>
             <dt>Decisions priced</dt><dd>${priced.length}</dd>
@@ -142,15 +172,6 @@ function blunderTable(priced) {
         `<tr><td>${d.turn + 1}</td><td>${describe(d.e, d.e.choice)}</td>
          <td>${describe(d.e, bestOption(d.e))}</td>
          <td class="cost">−${d.cost.toFixed(1)}</td></tr>`).join('') + `</tbody></table>`;
-}
-
-function bestOption(e) {
-    let best = -1, top = -Infinity;
-    for (let i = 0; i < CATEGORIES; i++)
-        if (!(e.pos.mask >> i & 1) && e.ev[i] > top) { top = e.ev[i]; best = i; }
-    if (e.pos.rolls > 0)
-        for (let i = 20; i < 84; i++) if (e.ev[i] > top) { top = e.ev[i]; best = i; }
-    return best;
 }
 
 async function showAnalysis() {
@@ -194,6 +215,15 @@ async function showAnalysis() {
     });
 
     const sides = ['human', 'robot'];
+
+    // Only Maxi Yatzy carries rolls between turns, so the banked-rolls chart is
+    // a flat line saying nothing in the other variants.
+    const rollsChart = R.banksRolls ? `
+            <h3>Rolls in hand</h3>
+            <p class="hint">Rolls remaining at each decision, so banked rolls show up as peaks.</p>
+            ${lineChart(sides.map(bank))}
+            ${legend(sides.map(bank))}` : '';
+
     screen.innerHTML = `
         <div class="sheet">
             <h2>${headline()}</h2>
@@ -214,14 +244,16 @@ async function showAnalysis() {
                          ...sides.map(w => cumulative(w, 'cost'))], v => signed(v))}
             ${legend([...sides.map(w => cumulative(w, 'luck')),
                       ...sides.map(w => cumulative(w, 'cost'))])}
-
-            <h3>Rolls in hand</h3>
-            <p class="hint">Rolls remaining at each decision, so banked rolls show up as peaks.</p>
-            ${lineChart(sides.map(bank))}
-            ${legend(sides.map(bank))}
+            ${rollsChart}
 
             <h3>Your five costliest decisions</h3>
             ${blunderTable(priced.human)}
+
+            <p class="reveal">Want to see the solver's answers while you play?
+                Press <kbd>E</kbd> during a game — or on a touchscreen, press and
+                hold the top-left corner of the score sheet. Every category and
+                every hold is then labelled with the score you can expect to
+                finish on.</p>
 
             <button id="again">Play again</button>
         </div>`;
