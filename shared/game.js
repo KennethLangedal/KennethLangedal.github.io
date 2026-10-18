@@ -301,12 +301,23 @@ function resetDice() {
     });
 }
 
+const _cryptoRandomBuffer = new Uint32Array(1);
+
+function secureRandom() {
+    // Reuses the exact same memory space every frame
+    crypto.getRandomValues(_cryptoRandomBuffer);
+    
+    // Divide the 32-bit unsigned int element by 2^32 
+    // to mimic Math.random's [0, 1) bounds exactly.
+    return _cryptoRandomBuffer[0] / 4294967296;
+}
+
 async function rollDice() {
     if (!G.rolls) return;
     rollBtn.disabled = true;
     const rolling = [...Array(N).keys()].filter(i => !dieEls[i].classList.contains('keep'));
     rolling.forEach((i, n) => {
-        G.dice[i] = 1 + Math.floor(Math.random() * 6);
+        G.dice[i] = 1 + Math.floor(secureRandom() * 6);
         showFace(i, G.dice[i], n * 45);          // stagger so they don't land in unison
     });
     if (rolling.length) await sleep(ROLL_MS + rolling.length * 45);
