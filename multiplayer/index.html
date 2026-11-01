@@ -12,11 +12,12 @@
     <p id="message" role="status" aria-live="polite"></p>
     <section id="lobby">
         <form id="setup">
-            <h1 id="lobby-title">Play with a friend</h1>
+            <h1 id="lobby-title">Play with friends</h1>
             <label>Your name<input id="name" maxlength="24" required autocomplete="nickname"></label>
             <label id="variant-label">Game<select id="variant"><option value="maxi">Maxi Yatzy</option><option value="yatzy">Yatzy</option><option value="yahtzee">Yahtzee</option></select></label>
+            <label id="player-count-label">Players<select id="player-count"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option><option value="5">5 players</option></select></label>
             <button id="submit" type="submit">Create private room</button>
-            <p id="setup-note">Create a room, then send the invite link to your friend.</p>
+            <p id="setup-note">Choose 2–5 players, then share the invite link. The game starts when everyone has joined.</p>
             <a href="/maxi/">Play solo</a>
         </form>
     </section>
@@ -32,7 +33,7 @@
         </div>
         <div id="offline" role="status"><span id="connection">Connecting…</span><span id="turn"></span> <a id="new-game" href="/multiplayer/" hidden>Play again</a></div>
         <div id="invite" hidden>
-            <label>Invite your friend<input id="invite-url" readonly></label>
+            <label>Invite your friends<input id="invite-url" readonly></label>
             <button id="copy" type="button">Copy invite link</button>
         </div>
         <div id="rolls">

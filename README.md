@@ -1,8 +1,8 @@
 # Yatzy with friends
 
-The original solitaire games and solver remain available at `/yatzy/`, `/maxi/`, and `/yahtzee/`. Online two-player games live at `/multiplayer/` and reuse the original scoring rules, including Maxi roll banking and the Yahtzee joker rule.
+The original solitaire games and solver remain available at `/yatzy/`, `/maxi/`, and `/yahtzee/`. Online games for 2–5 players live at `/multiplayer/` and reuse the original scoring rules, including Maxi roll banking and the Yahtzee joker rule.
 
-Multiplayer uses the original game's stylesheet, full-height score sheet, animated cube dice, Keep tags, roll chips, and tap-to-score interaction. Your score is in the left player column and your friend's score is in the right. The lobby defaults to Maxi Yatzy.
+Multiplayer uses the original game's stylesheet, full-height score sheet, animated cube dice, Keep tags, roll chips, and tap-to-score interaction. Your score is in the left player column, followed by the other players in join order. In group games, scroll the sheet sideways on a narrow screen to see every player; category names stay visible. The lobby defaults to Maxi Yatzy and two players.
 
 ## Run locally
 
@@ -12,7 +12,7 @@ Install Node.js 22 or later, then run:
 npm start
 ```
 
-Open http://localhost:3000/multiplayer/, enter your name, and create a room. Send the invite link to your friend. The creator plays first; each player rolls up to three times, keeps dice, and chooses a category. Scores and dice update live on both screens. A zero is a valid score. A new game uses a new room.
+Open http://localhost:3000/multiplayer/, enter your name, choose 2–5 players, and create a room. Send the same invite link to your friends. The game starts automatically when all selected seats are filled; moves are disabled while waiting. The creator plays first, followed by the others in join order, cycling back to the creator. Each player rolls up to three times (plus their own banked rolls in Maxi), keeps dice, and chooses a category. Scores and dice update live on every screen. A zero is a valid score. The game finishes when everyone has filled their sheet, and joint winners are shown for ties. A new game uses a new room; its player count cannot change after creation.
 
 If `npm` is unavailable but Node.js is installed, run `node server/index.js` instead. There are no packages to install.
 
@@ -20,7 +20,7 @@ For two devices on the same Wi-Fi, open the server computer's LAN address (for e
 
 ## Play over the internet
 
-GitHub Pages only serves static files, so it cannot run the multiplayer server. Deploy **this repository as a Node web service**, then both players open that service's HTTPS address. The personal homepage and the original games can also be served by that service. There is no database, account system, npm dependency, or solver dependency for multiplayer.
+GitHub Pages only serves static files, so it cannot run the multiplayer server. Deploy **this repository as a Node web service**, then all players open that service's HTTPS address. The personal homepage and the original games can also be served by that service. There is no database, account system, npm dependency, or solver dependency for multiplayer.
 
 Use these settings on a Node-capable host:
 
@@ -35,10 +35,10 @@ After deployment, replace the `/multiplayer/` links on the GitHub Pages homepage
 
 ## Sessions and limits
 
-- Share the room link only with your friend. Anyone holding the link can claim the second seat before they join.
-- Player credentials are random, saved in the browser's local storage, and excluded from invite links and shared game state. Refreshing or reconnecting in the same browser restores the seat. Clearing browser storage loses that seat. Use separate browser profiles or devices to test two players; tabs in the same profile share the saved seat.
+- Share the room link only with your friends. Anyone holding the link can claim an empty seat before they join. Full rooms reject additional players.
+- Player credentials are random, saved in the browser's local storage, and excluded from invite links and shared game state. Refreshing or reconnecting in the same browser restores the seat. Clearing browser storage loses that seat. Use separate browser profiles or devices to test multiple players; tabs in the same profile share the saved seat.
 - The server owns dice generation, turn order, scoring, and action revisions. It rejects out-of-turn, stale, and illegal moves.
-- A dropped connection disables controls and reconnects automatically. The other player can still finish their current turn. Rooms are removed after 24 hours without a move or join; a server restart or sleeping host also loses rooms. There is no durable save or automatic seat replacement.
+- A dropped connection disables controls and reconnects automatically. Other players can continue until it is the disconnected player's turn. Rooms are removed after 24 hours without a move or join; a server restart or sleeping host also loses rooms. There is no durable save or automatic seat replacement.
 - The server caps rooms, streams per room, request size, and mutation requests per IP. For a public high-traffic service, add infrastructure rate limiting and persistent shared storage before scaling. Avoid logging event-stream query strings, which contain player credentials.
 
 ## How multiplayer works
@@ -55,4 +55,4 @@ npm test
 
 Alternatively, run `node --test` directly.
 
-Tests cover server-authoritative turns, scoring, complete games, variant rules, token isolation, invalid requests, rejoining, and live state delivery. For a manual check, use two browser profiles, create and join a room, keep a die, roll, score, refresh, and temporarily disconnect one browser.
+Tests cover server-authoritative turns, scoring, complete games with 2–5 players in every variant, waiting and full rooms, Maxi roll banking, token isolation, invalid requests, seat restoration, and live state delivery to all five players. For a manual check, use separate browser profiles, create and join a room, keep a die, roll, score, refresh, and temporarily disconnect one browser.

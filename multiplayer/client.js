@@ -42,7 +42,7 @@ const REST = { 1: [0, 0], 2: [90, 0], 3: [0, 90], 4: [0, -90], 5: [-90, 0], 6: [
 const DEPTH = 'translateZ(calc(var(--die) * -0.5))';
 const TILT = DEPTH + ' rotateX(-24deg) rotateY(-32deg)';
 let display = null, animating = false, animationTimer = null, swallowClick = false;
-let spins = [], latest = [null, null], previousMasks = [0, 0];
+let spins = [], latest = [], previousMasks = [];
 
 function finishAnimation() {
     clearTimeout(animationTimer);
@@ -68,15 +68,16 @@ addEventListener('click', event => {
 function render() {
     $('connection').textContent = connected ? 'Connected' : 'Reconnecting…';
     if (!state) return;
-    const r = buildRules(state.variant), myIndex = state.you;
+    const r = buildRules(state.variant), myIndex = state.you, playerCount = state.playerCount || 2;
     const mine = connected && !busy && !animating && state.phase === 'playing' && myIndex === state.turn;
     $('game-title').textContent = r.title;
     $('invite').hidden = state.phase !== 'waiting';
-    $('turn').textContent = state.phase === 'waiting' ? 'Waiting for your friend to join…'
+    $('turn').textContent = state.phase === 'waiting' ? 'Waiting for players: ' + state.players.length + '/' + playerCount + ' joined.'
         : state.phase === 'finished' ? result()
         : myIndex === state.turn ? 'Your turn' : state.players[state.turn].name + '’s turn';
-    // During play the original layout needs only its green active-column marker.
-    $('offline').hidden = connected && state.phase === 'playing';
+    // In group games the active column may be outside the visible part of the sheet.
+    $('offline').hidden = connected && state.phase === 'playing' && playerCount === 2;
+    $('offline').classList.toggle('group-status', playerCount > 2);
     $('new-game').hidden = state.phase !== 'finished';
 
     let dice = [...$('dice').children];
@@ -127,14 +128,29 @@ function render() {
     $('roll').disabled = !mine || animating || !state.rolls || state.held.every(Boolean);
 
     // Your score stays in the original Player column on either device.
-    const seats = [myIndex, 1 - myIndex];
+    const seats = [myIndex, ...Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== myIndex)];
+    $('sheet').classList.toggle('group-game', playerCount > 2);
+    const header = $('brand').parentElement;
+    if (header.children.length !== seats.length + 1) {
+        while (header.children.length > 1) header.lastElementChild.remove();
+        seats.forEach((_, column) => {
+            const th = document.createElement('th'); th.id = 'player-' + column; th.scope = 'col'; header.append(th);
+        });
+    }
+    if ($('rolls').children.length !== seats.length) {
+        $('rolls').replaceChildren(...seats.map((_, column) => {
+            const counter = document.createElement('span'), name = document.createElement('span'), chips = document.createElement('b');
+            name.id = 'roll-name-' + column; chips.id = 'chips-' + column;
+            counter.append(name, ' rolls ', chips); return counter;
+        }));
+    }
     state.players.forEach((p, i) => {
-        const changed = p.mask & ~previousMasks[i];
+        const changed = p.mask & ~(previousMasks[i] || 0);
         if (changed) latest[i] = Math.log2(changed);
         previousMasks[i] = p.mask;
     });
     seats.forEach((seat, column) => {
-        const p = state.players[seat], name = p ? p.name : 'Friend';
+        const p = state.players[seat], name = p ? p.name : 'Player ' + (seat + 1);
         $('player-' + column).textContent = name;
         $('player-' + column).classList.toggle('turn', state.phase === 'playing' && state.turn === seat);
         $('roll-name-' + column).textContent = name;
@@ -194,7 +210,9 @@ function render() {
 }
 function result() {
     const totals = state.players.map(p => p.score + p.bonus);
-    return totals[0] === totals[1] ? `A draw! ${totals[0]} points each.` : `${state.players[totals[0] > totals[1] ? 0 : 1].name} wins! ${totals[0]} – ${totals[1]}`;
+    const best = Math.max(...totals);
+    const winners = state.players.filter((_, i) => totals[i] === best).map(p => p.name);
+    return winners.length === 1 ? `${winners[0]} wins! ${best} points.` : `${winners.join(', ')} tie for first! ${best} points each.`;
 }
 async function action(data) {
     if (busy || !connected) return;
@@ -206,7 +224,7 @@ async function action(data) {
 $('setup').onsubmit = async event => {
     event.preventDefault(); $('submit').disabled = true; message();
     try {
-        const data = await request(roomId ? `/api/rooms/${roomId}/join` : '/api/rooms', { name: $('name').value, variant: $('variant').value });
+        const data = await request(roomId ? `/api/rooms/${roomId}/join` : '/api/rooms', { name: $('name').value, variant: $('variant').value, playerCount: Number($('player-count').value) });
         roomId = data.id; saveCredential(data.token);
         history.replaceState(null, '', `?room=${roomId}`); connect();
     } catch (error) { message(error.message); }
@@ -215,11 +233,11 @@ $('setup').onsubmit = async event => {
 $('roll').onclick = () => action({ type: 'roll' });
 $('copy').onclick = async () => {
     try { await navigator.clipboard.writeText($('invite-url').value); $('copy').textContent = 'Copied!'; }
-    catch { $('invite-url').select(); message('Copy the selected invite link and send it to your friend.'); }
+    catch { $('invite-url').select(); message('Copy the selected invite link and send it to your friends.'); }
 };
 if (roomId && !/^[a-f0-9]{12}$/.test(roomId)) { message('That invite link is invalid. Create a new room.'); roomId = null; }
 if (roomId) {
     try { credential = localStorage.getItem(storageKey()); } catch { /* Joining still works without storage. */ }
     if (credential) connect();
-    else { $('lobby-title').textContent = 'Join your friend'; $('variant-label').hidden = true; $('submit').textContent = 'Join game'; $('setup-note').textContent = 'Enter your name to take the second seat.'; }
+    else { $('lobby-title').textContent = 'Join your friends'; $('variant-label').hidden = true; $('player-count-label').hidden = true; $('submit').textContent = 'Join game'; $('setup-note').textContent = 'Enter your name to join the room.'; }
 }

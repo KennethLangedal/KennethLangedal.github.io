@@ -18,3 +18,10 @@ input, select { display: block; width: 100%; padding: .7em; margin-top: .4em; fo
 .die { cursor: pointer; }
 .die[aria-disabled="true"] { cursor: default; }
 .die:focus-visible, td.pick:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+/* Keep the original row heights and readable scores when five columns are needed. */
+#sheet.group-game { min-width: 760px; }
+#sheet.group-game th:first-child, #sheet.group-game td:first-child { width: 30%; position: sticky; left: 0; z-index: 1; background: var(--bg); }
+#sheet.group-game th:first-child, #sheet.group-game .tally td:first-child { background: var(--shade); }
+#rolls { flex-wrap: wrap; gap: .35em 1em; }
+#rolls > span { white-space: nowrap; }
+#offline.group-status { color: var(--ink); background: var(--shade); border-color: var(--line); }

@@ -42,7 +42,7 @@ function createServer() {
                     if (!data || typeof data !== 'object' || Array.isArray(data)) return send(400, { error: 'Invalid request.' });
                     if (url.pathname === '/api/rooms') {
                         if (rooms.size >= MAX_ROOMS) return send(503, { error: 'Server full. Try again later.' });
-                        const room = createRoom(data.variant, data.name);
+                        const room = createRoom(data.variant, data.name, data.playerCount);
                         const id = randomBytes(6).toString('hex'); rooms.set(id, room);
                         return send(201, { id, token: room.players[0].token });
                     }
@@ -74,7 +74,7 @@ function createServer() {
                     const you = room.players.findIndex(p => p.token === url.searchParams.get('token'));
                     if (you < 0) return send(401, { error: 'Invalid player.' });
                     const clients = streams.get(id) || new Set();
-                    if (clients.size >= 8) return send(429, { error: 'Too many open tabs for this room.' });
+                    if (clients.size >= room.playerCount * 4) return send(429, { error: 'Too many open tabs for this room.' });
                     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache, no-store', 'X-Accel-Buffering': 'no' });
                     res.playerIndex = you;
                     res.write(`data: ${JSON.stringify({ ...snapshot(room), you })}\n\n`);

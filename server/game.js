@@ -9,17 +9,20 @@ function cleanName(value) {
     check(typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 24, 'Enter a name of 1–24 characters.');
     return value.trim();
 }
-function createRoom(variant, name) {
+function createRoom(variant, name, playerCount = 2) {
     check(rules.has(variant), 'Unknown game variant.');
+    check(Number.isInteger(playerCount) && playerCount >= 2 && playerCount <= 5, 'Choose 2–5 players.');
     const r = rules.get(variant);
     const p = player(cleanName(name)); p.cells = Array(r.nCells).fill(null);
-    return { variant, players: [p], phase: 'waiting', turn: 0, rolls: r.rollsPerTurn,
+    return { variant, playerCount, players: [p], phase: 'waiting', turn: 0, rolls: r.rollsPerTurn,
         dice: Array(r.dice).fill(1), held: Array(r.dice).fill(false), rolled: false, revision: 0, updated: Date.now() };
 }
 function joinRoom(room, name) {
-    check(room.phase === 'waiting' && room.players.length === 1, 'This room already has two players.');
+    check(room.phase === 'waiting' && room.players.length < room.playerCount, 'This room is full.');
     const p = player(cleanName(name)); p.cells = Array(rules.get(room.variant).nCells).fill(null);
-    room.players.push(p); room.phase = 'playing'; room.revision++; room.updated = Date.now();
+    room.players.push(p);
+    if (room.players.length === room.playerCount) room.phase = 'playing';
+    room.revision++; room.updated = Date.now();
     return p;
 }
 function act(room, index, action, randomDie = () => randomInt(1, 7)) {
@@ -50,7 +53,7 @@ function act(room, index, action, randomDie = () => randomInt(1, 7)) {
         p.extra = r.banksRolls ? room.rolls : 0;
         if (room.players.every(s => s.mask === (1 << r.nCells) - 1)) room.phase = 'finished';
         else {
-            room.turn = 1 - index;
+            room.turn = (index + 1) % room.players.length;
             room.rolls = r.rollsPerTurn + room.players[room.turn].extra;
             room.rolled = false; room.held.fill(false); room.dice.fill(1);
         }
