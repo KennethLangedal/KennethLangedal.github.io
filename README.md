@@ -2,6 +2,8 @@
 
 The original solitaire games and solver remain available at `/yatzy/`, `/maxi/`, and `/yahtzee/`. Online two-player games live at `/multiplayer/` and reuse the original scoring rules, including Maxi roll banking and the Yahtzee joker rule.
 
+Multiplayer uses the original game's stylesheet, full-height score sheet, animated cube dice, Keep tags, roll chips, and tap-to-score interaction. Your score is in the left player column and your friend's score is in the right. The lobby defaults to Maxi Yatzy.
+
 ## Run locally
 
 Install Node.js 22 or later, then run:

@@ -1,6 +1,5 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const pipPositions = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
 let roomId = new URLSearchParams(location.search).get('room');
 let credential = null, state = null, source = null, connected = false, busy = false;
 const storageKey = () => `yatzy-room:${roomId}`;
@@ -37,62 +36,161 @@ function connect() {
         } catch { /* EventSource retries when the connection returns. */ }
     };
 }
+// Use the same cube faces, rotations, staggering, score rows and roll chips as the solo game.
+const PIPS = { 1: [22], 2: [11, 33], 3: [11, 22, 33], 4: [11, 13, 31, 33], 5: [11, 13, 22, 31, 33], 6: [11, 13, 21, 23, 31, 33] };
+const REST = { 1: [0, 0], 2: [90, 0], 3: [0, 90], 4: [0, -90], 5: [-90, 0], 6: [0, 180] };
+const DEPTH = 'translateZ(calc(var(--die) * -0.5))';
+const TILT = DEPTH + ' rotateX(-24deg) rotateY(-32deg)';
+let display = null, animating = false, animationTimer = null, swallowClick = false;
+let spins = [], latest = [null, null], previousMasks = [0, 0];
+
+function finishAnimation() {
+    clearTimeout(animationTimer);
+    animating = false;
+    render();
+}
+addEventListener('pointerdown', event => {
+    swallowClick = false;
+    if (!animating) return;
+    document.body.classList.add('skip');
+    finishAnimation();
+    requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('skip')));
+    swallowClick = true;
+    event.stopPropagation();
+}, true);
+addEventListener('click', event => {
+    if (!swallowClick) return;
+    swallowClick = false;
+    event.preventDefault();
+    event.stopPropagation();
+}, true);
+
 function render() {
     $('connection').textContent = connected ? 'Connected' : 'Reconnecting…';
     if (!state) return;
-    const r = buildRules(state.variant);
-    const myIndex = state.you;
-    const mine = connected && !busy && state.phase === 'playing' && myIndex === state.turn;
+    const r = buildRules(state.variant), myIndex = state.you;
+    const mine = connected && !busy && !animating && state.phase === 'playing' && myIndex === state.turn;
     $('game-title').textContent = r.title;
     $('invite').hidden = state.phase !== 'waiting';
     $('turn').textContent = state.phase === 'waiting' ? 'Waiting for your friend to join…'
         : state.phase === 'finished' ? result()
-        : myIndex === state.turn ? 'Your turn' : `${state.players[state.turn].name}’s turn`;
-    $('rolls').textContent = `${state.rolls} roll${state.rolls === 1 ? '' : 's'} left`;
-    $('roll').disabled = !mine || !state.rolls || state.held.every(Boolean);
-    $('hint').textContent = state.phase === 'finished' ? 'Game complete. Play again with a new room link.'
-        : mine ? 'Tap dice to keep them. Tap a score to finish your turn.' : 'Both players see each roll and score here.';
-    $('dice').replaceChildren(...state.dice.map((d, i) => {
-        const button = document.createElement('button');
-        button.className = `die${state.held[i] ? ' held' : ''}`;
-        const face = document.createElement('span'); face.className = 'die-face'; face.setAttribute('aria-hidden', 'true');
-        for (const position of state.rolled ? pipPositions[d] : [5]) {
-            const pip = document.createElement('i'); pip.className = 'pip';
-            pip.style.gridRow = Math.ceil(position / 3); pip.style.gridColumn = (position - 1) % 3 + 1;
-            face.append(pip);
+        : myIndex === state.turn ? 'Your turn' : state.players[state.turn].name + '’s turn';
+    // During play the original layout needs only its green active-column marker.
+    $('offline').hidden = connected && state.phase === 'playing';
+    $('new-game').hidden = state.phase !== 'finished';
+
+    let dice = [...$('dice').children];
+    if (dice.length !== r.dice) {
+        const faces = [1, 2, 3, 4, 5, 6].map(v =>
+            '<div class="face f' + v + '">' + PIPS[v].map(p => '<i class="p' + p + '"></i>').join('') + '</div>').join('')
+            + '<div class="core"></div><div class="core x"></div><div class="core y"></div>';
+        $('dice').innerHTML = ('<div class="die" role="button" tabindex="0"><div class="cube">' + faces
+            + '</div><span class="tag keep-tag">Keep</span></div>').repeat(r.dice);
+        dice = [...$('dice').children];
+        spins = Array.from({ length: r.dice }, () => [0, 0]);
+        dice.forEach((die, i) => {
+            die.onclick = () => { if (die.getAttribute('aria-disabled') === 'false') action({ type: 'hold', die: i }); };
+            die.onkeydown = event => {
+                if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); die.click(); }
+            };
+        });
+    }
+    const newRoll = state.rolled && (!display || !display.rolled || display.turn !== state.turn || state.rolls < display.rolls);
+    const reset = !state.rolled && (!display || display.rolled || display.turn !== state.turn);
+    if (newRoll) {
+        animating = true;
+        clearTimeout(animationTimer);
+        animationTimer = setTimeout(finishAnimation, 700 + r.dice * 45);
+    }
+    dice.forEach((die, i) => {
+        const cube = die.firstElementChild;
+        die.classList.toggle('keep', state.held[i]);
+        die.setAttribute('aria-label', 'Die ' + (i + 1) + ': ' + (state.rolled ? state.dice[i] : 'unrolled'));
+        die.setAttribute('aria-pressed', String(state.held[i]));
+        die.setAttribute('aria-disabled', String(!mine || animating || !state.rolled || state.rolls === 0));
+        if (reset) {
+            spins[i] = [0, 0];
+            cube.style.transition = 'none';
+            cube.style.transitionDelay = '0ms';
+            cube.style.transform = TILT;
+            void cube.offsetWidth;
+            cube.style.transition = '';
+        } else if (newRoll && (!state.held[i] || !display)) {
+            const [rx, ry] = REST[state.dice[i]];
+            spins[i][0] += 1 + Math.round(Math.random());
+            spins[i][1] += 1 + Math.round(Math.random());
+            cube.style.transitionDelay = i * 45 + 'ms';
+            cube.style.transform = DEPTH + ' rotateX(' + (rx + 360 * spins[i][0]) + 'deg) rotateY(' + (ry + 360 * spins[i][1]) + 'deg)';
         }
-        button.append(face);
-        const label = document.createElement('span'); label.textContent = state.held[i] ? 'Keep' : 'Die ' + (i + 1); button.append(label);
-        button.setAttribute('aria-label', `Die ${i + 1}: ${state.rolled ? d : 'unrolled'}`);
-        button.setAttribute('aria-pressed', String(state.held[i]));
-        button.disabled = !mine || !state.rolled || state.rolls === 0;
-        button.onclick = () => action({ type: 'hold', die: i });
-        return button;
-    }));
-    for (let i = 0; i < 2; i++) $('player-' + i).textContent = state.players[i] ? `${state.players[i].name}${i === myIndex ? ' (you)' : ''}` : 'Friend';
+    });
+    display = { rolled: state.rolled, rolls: state.rolls, turn: state.turn };
+    $('roll').disabled = !mine || animating || !state.rolls || state.held.every(Boolean);
+
+    // Your score stays in the original Player column on either device.
+    const seats = [myIndex, 1 - myIndex];
+    state.players.forEach((p, i) => {
+        const changed = p.mask & ~previousMasks[i];
+        if (changed) latest[i] = Math.log2(changed);
+        previousMasks[i] = p.mask;
+    });
+    seats.forEach((seat, column) => {
+        const p = state.players[seat], name = p ? p.name : 'Friend';
+        $('player-' + column).textContent = name;
+        $('player-' + column).classList.toggle('turn', state.phase === 'playing' && state.turn === seat);
+        $('roll-name-' + column).textContent = name;
+        const rolls = p ? (state.phase === 'playing' && seat === state.turn ? state.rolls : p.extra) : 0;
+        $('chips-' + column).innerHTML = '<i></i>'.repeat(Math.min(rolls, 5)) + '<em>×' + rolls + '</em>';
+    });
     const active = state.players[state.turn];
     const placement = state.rolled ? r.placements(r.rollId(state.dice), active.mask, active.alikeScored) : null;
-    $('scores').replaceChildren(...r.cells.map((cell, i) => {
-        const row = document.createElement('tr'), heading = document.createElement('th');
-        heading.scope = 'row'; heading.textContent = cell.label; row.append(heading);
-        for (let j = 0; j < 2; j++) {
-            const td = document.createElement('td'), p = state.players[j];
-            if (p && p.cells[i] !== null) td.textContent = p.cells[i];
-            else if (mine && j === myIndex && placement && (placement.legal & (1 << i))) {
-                const button = document.createElement('button'); button.className = 'score-pick';
-                button.textContent = placement.scores[i] + placement.bonus;
-                button.setAttribute('aria-label', `Score ${button.textContent} in ${cell.label}`);
-                button.onclick = () => action({ type: 'score', cell: i }); td.append(button);
-            } else td.textContent = '—';
-            row.append(td);
+    const rows = [];
+    const tally = (label, value, rule = false) => {
+        const tr = document.createElement('tr'); tr.className = 'tally' + (rule ? ' rule' : '');
+        for (const text of [label, ...seats.map(seat => state.players[seat] ? value(state.players[seat]) : '')]) {
+            const td = document.createElement('td'); td.textContent = text; tr.append(td);
         }
-        return row;
-    }));
-    $('totals').replaceChildren(...[['Upper sum', p => p.upper], ['Bonus', p => p.bonus], ['Total', p => p.score + p.bonus]].map(([name, value]) => {
-        const tr = document.createElement('tr'), th = document.createElement('th'); th.textContent = name; tr.append(th);
-        for (let i = 0; i < 2; i++) { const td = document.createElement('td'); td.textContent = state.players[i] ? value(state.players[i]) : '—'; tr.append(td); }
-        return tr;
-    }));
+        rows.push(tr);
+    };
+    const lastUpper = r.cells.reduce((last, cell, i) => cell.bonus ? i : last, -1);
+    r.cells.forEach((cell, i) => {
+        if (i === lastUpper + 1) {
+            tally('Sum', p => {
+                const pace = r.cells.reduce((sum, c, n) => sum + (c.bonus && (p.mask & (1 << n)) ? r.bonusTarget / 21 * (c.a + 1) : 0), 0);
+                const diff = p.upper - pace;
+                return p.upper + ' (' + (diff > 0 ? '+' : '') + diff + ')';
+            }, true);
+            tally('Bonus', p => p.bonus);
+        }
+        const row = document.createElement('tr');
+        if (i === lastUpper + 1) row.className = 'rule';
+        const cat = document.createElement('td'); cat.className = 'cat';
+        const label = document.createElement('div'), name = document.createElement('span'), pips = document.createElement('b');
+        name.textContent = cell.label;
+        pips.textContent = [...cell.pips].map(v => String.fromCharCode(9855 + Number(v))).join('');
+        label.append(name, pips); cat.append(label); row.append(cat);
+        seats.forEach((seat, column) => {
+            const td = document.createElement('td'), p = state.players[seat];
+            const used = p && p.cells[i] !== null;
+            const allowed = column === 0 && mine && !animating && placement && (placement.legal & (1 << i));
+            td.className = column === 0 ? 'pick' : 'bot' + (latest[seat] === i ? ' latest' : '');
+            if (used) td.textContent = p.cells[i];
+            else if (allowed) {
+                const points = placement.scores[i] + placement.bonus;
+                td.textContent = points || '';
+                td.classList.toggle('preview', points !== 0);
+                td.setAttribute('role', 'button'); td.tabIndex = 0;
+                td.setAttribute('aria-label', 'Score ' + points + ' in ' + cell.label);
+                td.onclick = () => action({ type: 'score', cell: i });
+                td.onkeydown = event => {
+                    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); td.click(); }
+                };
+            } else if (column === 0 && !used && placement && !(placement.legal & (1 << i))) td.classList.add('barred');
+            row.append(td);
+        });
+        rows.push(row);
+    });
+    tally('Sum', p => p.score + p.bonus, true);
+    $('scores').replaceChildren(...rows);
 }
 function result() {
     const totals = state.players.map(p => p.score + p.bonus);
