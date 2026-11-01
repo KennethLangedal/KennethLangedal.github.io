@@ -1,0 +1,42 @@
+:root { color-scheme: light; font-family: system-ui, sans-serif; color: #21362f; background: #f4f5ef; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 760px; margin: auto; padding: 24px 20px 48px; }
+header, .game-heading, .controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+a { color: #24664e; text-underline-offset: 3px; }
+header { font-size: .85rem; margin-bottom: 40px; }
+h1 { font-size: clamp(1.8rem, 6vw, 2.8rem); margin: 0; letter-spacing: -.04em; }
+h2 { font-size: 1.2rem; }
+.intro, #hint, #setup-note { color: #5c6e65; }
+.card { background: white; border: 1px solid #d9e1d8; border-radius: 16px; padding: 24px; }
+label { display: block; font-weight: 600; margin-bottom: 20px; }
+input, select { display: block; width: 100%; font: inherit; color: inherit; padding: 12px; margin-top: 8px; border: 1px solid #b9c9bd; border-radius: 8px; background: white; }
+button { font: inherit; font-weight: 600; border: 0; border-radius: 9px; padding: 13px 20px; color: white; background: #24664e; cursor: pointer; }
+button:hover:enabled { background: #174a37; }
+button:disabled { opacity: .5; cursor: default; }
+:focus-visible { outline: 3px solid #cb861b; outline-offset: 3px; }
+[hidden] { display: none !important; }
+#message { min-height: 1.5em; color: #9b3e24; }
+#connection { font-size: .85rem; color: #5c6e65; }
+.invite { margin-bottom: 24px; }
+.invite input { font-size: .9rem; font-weight: 400; }
+.turn { font-size: 1.2rem; font-weight: 650; }
+.dice { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0; }
+.die { color: #21362f; background: white; border: 2px solid #becdbf; width: 68px; padding: 6px; font-size: 2.8rem; line-height: 1.1; }
+.die span { display: block; font-size: .65rem; line-height: 1.8; }
+.die .die-face { display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); width: 42px; height: 42px; padding: 3px; gap: 3px; margin: 3px auto; }
+.pip { display: block; background: currentColor; border-radius: 50%; }
+.die.held { background: #dcebdc; border-color: #24664e; transform: translateY(-5px); }
+.die:disabled { opacity: 1; }
+.die:hover:enabled { color: white; }
+.controls { justify-content: flex-start; }
+.table-wrap { overflow-x: auto; padding: 0; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+th, td { padding: 11px 14px; border-bottom: 1px solid #e6ebe4; text-align: center; }
+th:first-child { text-align: left; font-weight: 500; width: 46%; }
+thead th { background: #e8eee5; overflow-wrap: anywhere; max-width: 170px; }
+.score-pick { display: block; width: 100%; padding: 7px 12px; background: #edf4eb; color: #24664e; }
+td:has(.score-pick) { padding: 3px 7px; }
+tfoot tr:last-child { font-weight: 750; background: #e8eee5; }
+.new-game { display: inline-block; margin-top: 24px; }
+@media (max-width: 480px) { main { padding: 16px 12px 32px; } header { margin-bottom: 28px; } .card { padding: 18px; } .table-wrap { padding: 0; } .die { width: 46px; font-size: 2rem; } .die .die-face { width: 28px; height: 28px; gap: 2px; padding: 1px; } .dice { gap: 6px; } th, td { padding: 10px 8px; } }

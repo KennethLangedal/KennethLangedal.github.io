@@ -1,0 +1,7 @@
+{
+  "name": "yatzy-with-friends",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": { "start": "node server/index.js", "test": "node --test" },
+  "engines": { "node": ">=22" }
+}

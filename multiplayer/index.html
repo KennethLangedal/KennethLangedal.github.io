@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="no-referrer">
+    <title>Yatzy with friends</title>
+    <link rel="stylesheet" href="/multiplayer/style.css">
+</head>
+<body>
+<main>
+    <header><a href="/">Kenneth Langedal</a><a href="/yatzy/">Play solo</a></header>
+    <h1>Yatzy with friends</h1>
+    <p class="intro">Two players. One score sheet. A little friendly competition.</p>
+    <p id="message" role="status" aria-live="polite"></p>
+    <section id="lobby" class="card">
+        <form id="setup">
+            <h2 id="lobby-title">Start a game</h2>
+            <label>Your name<input id="name" maxlength="24" required autocomplete="nickname" placeholder="e.g. Kenneth"></label>
+            <label id="variant-label">Game<select id="variant"><option value="yatzy">Yatzy</option><option value="maxi">Maxi Yatzy</option><option value="yahtzee">Yahtzee</option></select></label>
+            <button id="submit" type="submit">Create private room</button>
+            <p id="setup-note">Create a room, then send the invite link to your friend.</p>
+        </form>
+    </section>
+    <section id="game" hidden>
+        <div class="card invite" id="invite">
+            <label>Invite your friend<input id="invite-url" readonly></label>
+            <button id="copy" type="button">Copy invite link</button>
+        </div>
+        <div class="game-heading"><h2 id="game-title"></h2><span id="connection" role="status"></span></div>
+        <p id="turn" class="turn" aria-live="polite"></p>
+        <div id="dice" class="dice" aria-label="Dice"></div>
+        <div class="controls"><button id="roll" type="button">Roll dice</button><span id="rolls"></span></div>
+        <p id="hint">Tap dice to keep them. Tap a score to finish your turn.</p>
+        <div class="table-wrap card"><table><thead><tr><th>Category</th><th id="player-0"></th><th id="player-1"></th></tr></thead><tbody id="scores"></tbody><tfoot id="totals"></tfoot></table></div>
+        <a class="new-game" href="/multiplayer/">Start another game</a>
+    </section>
+</main>
+<script src="/shared/rules.js"></script>
+<script src="/multiplayer/client.js"></script>
+</body>
+</html>
