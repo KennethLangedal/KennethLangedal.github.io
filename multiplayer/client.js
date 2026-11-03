@@ -108,7 +108,7 @@ function render() {
         die.classList.toggle('keep', state.held[i]);
         die.setAttribute('aria-label', 'Die ' + (i + 1) + ': ' + (state.rolled ? state.dice[i] : 'unrolled'));
         die.setAttribute('aria-pressed', String(state.held[i]));
-        die.setAttribute('aria-disabled', String(!mine || busy || animating || !state.rolled || state.rolls === 0));
+        die.setAttribute('aria-disabled', String(!mine || animating || !state.rolled || state.rolls === 0));
         if (reset) {
             spins[i] = [0, 0];
             cube.style.transition = 'none';
@@ -125,7 +125,7 @@ function render() {
         }
     });
     display = { rolled: state.rolled, rolls: state.rolls, turn: state.turn };
-    $('roll').disabled = !mine || busy || animating || !state.rolls || state.held.every(Boolean);
+    $('roll').disabled = !mine || animating || !state.rolls || state.held.every(Boolean);
 
     // Your score stays in the original Player column on either device.
     const seats = [myIndex, ...Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== myIndex)];
@@ -244,7 +244,7 @@ $('setup').onsubmit = async event => {
     } catch (error) { message(error.message); }
     finally { $('submit').disabled = false; }
 };
-$('roll').onclick = () => action({ type: 'roll' });
+$('roll').onclick = () => { $('roll').disabled = true; action({ type: 'roll' }); };
 $('copy').onclick = async () => {
     try { await navigator.clipboard.writeText($('invite-url').value); $('copy').textContent = 'Copied!'; }
     catch { $('invite-url').select(); message('Copy the selected invite link and send it to your friends.'); }
