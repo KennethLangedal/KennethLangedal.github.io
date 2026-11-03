@@ -69,7 +69,7 @@ function render() {
     $('connection').textContent = connected ? 'Connected' : 'Reconnecting…';
     if (!state) return;
     const r = buildRules(state.variant), myIndex = state.you, playerCount = state.playerCount || 2;
-    const mine = connected && !busy && !animating && state.phase === 'playing' && myIndex === state.turn;
+    const mine = connected && !animating && state.phase === 'playing' && myIndex === state.turn;
     $('game-title').textContent = r.title;
     $('invite').hidden = state.phase !== 'waiting';
     $('turn').textContent = state.phase === 'waiting' ? 'Waiting for players: ' + state.players.length + '/' + playerCount + ' joined.'
@@ -90,7 +90,7 @@ function render() {
         dice = [...$('dice').children];
         spins = Array.from({ length: r.dice }, () => [0, 0]);
         dice.forEach((die, i) => {
-            die.onclick = () => { if (die.getAttribute('aria-disabled') === 'false') action({ type: 'hold', die: i }); };
+            die.onclick = () => { if (!busy && die.getAttribute('aria-disabled') === 'false') action({ type: 'hold', die: i }); };
             die.onkeydown = event => {
                 if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); die.click(); }
             };
@@ -108,7 +108,7 @@ function render() {
         die.classList.toggle('keep', state.held[i]);
         die.setAttribute('aria-label', 'Die ' + (i + 1) + ': ' + (state.rolled ? state.dice[i] : 'unrolled'));
         die.setAttribute('aria-pressed', String(state.held[i]));
-        die.setAttribute('aria-disabled', String(!mine || animating || !state.rolled || state.rolls === 0));
+        die.setAttribute('aria-disabled', String(!mine || busy || animating || !state.rolled || state.rolls === 0));
         if (reset) {
             spins[i] = [0, 0];
             cube.style.transition = 'none';
@@ -125,7 +125,7 @@ function render() {
         }
     });
     display = { rolled: state.rolled, rolls: state.rolls, turn: state.turn };
-    $('roll').disabled = !mine || animating || !state.rolls || state.held.every(Boolean);
+    $('roll').disabled = !mine || busy || animating || !state.rolls || state.held.every(Boolean);
 
     // Your score stays in the original Player column on either device.
     const seats = [myIndex, ...Array.from({ length: playerCount }, (_, i) => i).filter(i => i !== myIndex)];
@@ -196,11 +196,19 @@ function render() {
                 td.classList.toggle('preview', points !== 0);
                 td.setAttribute('role', 'button'); td.tabIndex = 0;
                 td.setAttribute('aria-label', 'Score ' + points + ' in ' + cell.label);
-                td.onclick = () => action({ type: 'score', cell: i });
+                td.onclick = () => { if (!busy) action({ type: 'score', cell: i }); };
                 td.onkeydown = event => {
                     if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); td.click(); }
                 };
-            } else if (column === 0 && !used && placement && !(placement.legal & (1 << i))) td.classList.add('barred');
+            } else if (column === 0 && mine && !used && placement && !(placement.legal & (1 << i))) {
+                td.classList.add('barred');
+            } else if (column !== 0 && seat === state.turn && !animating && !used && placement && (placement.legal & (1 << i))) {
+                const points = placement.scores[i] + placement.bonus;
+                if (points > 0) {
+                    td.textContent = points;
+                    td.classList.add('preview');
+                }
+            }
             row.append(td);
         });
         rows.push(row);
@@ -216,10 +224,16 @@ function result() {
 }
 async function action(data) {
     if (busy || !connected) return;
-    busy = true; render(); message();
-    try { const next = await request(`/api/rooms/${roomId}/action`, { ...data, revision: state.revision }); if (next.revision >= state.revision) state = { ...next, you: state.you }; }
-    catch (error) { message(error.message); }
-    finally { busy = false; render(); }
+    busy = true;
+    if (data.type === 'hold') state.held[data.die] = !state.held[data.die];
+    render(); message();
+    try {
+        const next = await request(`/api/rooms/${roomId}/action`, { ...data, revision: state.revision });
+        if (next.revision >= state.revision) state = { ...next, you: state.you };
+    } catch (error) {
+        if (data.type === 'hold') state.held[data.die] = !state.held[data.die];
+        message(error.message);
+    } finally { busy = false; render(); }
 }
 $('setup').onsubmit = async event => {
     event.preventDefault(); $('submit').disabled = true; message();
