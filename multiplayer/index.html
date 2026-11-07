@@ -18,20 +18,20 @@
             <label id="player-count-label">Players<select id="player-count"><option value="2">2 players</option><option value="3">3 players</option><option value="4">4 players</option><option value="5">5 players</option></select></label>
             <button id="submit" type="submit">Create private room</button>
             <p id="setup-note">Choose 2–5 players, then share the invite link. The game starts when everyone has joined.</p>
-            <a href="/maxi/">Play solo</a>
+            <a href="https://kennethlangedal.github.io/maxi/">Play solo</a>
         </form>
     </section>
     <section id="game" hidden>
         <div id="sheet-wrap">
             <table id="sheet">
                 <thead><tr>
-                    <th id="brand"><a href="/">Kenneth Langedal</a><span id="variant-name"><span id="game-title">Maxi Yatzy</span></span></th>
+                    <th id="brand"><a href="https://kennethlangedal.github.io/">Kenneth Langedal</a><span id="variant-name"><span id="game-title">Maxi Yatzy</span></span></th>
                     <th id="player-0">Player</th><th id="player-1">Friend</th>
                 </tr></thead>
                 <tbody id="scores"></tbody>
             </table>
         </div>
-        <div id="offline" role="status"><span id="connection">Connecting…</span><span id="turn"></span> <a id="new-game" href="/multiplayer/" hidden>Play again</a></div>
+        <div id="offline" role="status"><span id="connection">Connecting…</span><span id="turn"></span> <button id="open-analysis" type="button" hidden>Game breakdown</button> <a id="new-game" href="/multiplayer/" hidden>Play again</a></div>
         <div id="invite" hidden>
             <label>Invite your friends<input id="invite-url" readonly></label>
             <button id="copy" type="button">Copy invite link</button>
@@ -43,7 +43,10 @@
         <div id="dice" aria-label="Dice"></div>
         <button id="roll" type="button" disabled>Roll Dice</button>
     </section>
+    <div id="analysis" hidden></div>
     <script src="/shared/rules.js"></script>
+    <script src="/shared/config.js"></script>
+    <script src="/multiplayer/analysis.js"></script>
     <script src="/multiplayer/client.js"></script>
 </body>
 </html>

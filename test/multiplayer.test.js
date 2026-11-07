@@ -36,6 +36,9 @@ test('turns, stale requests, held dice and roll limit are enforced', () => {
     move(room, 'score', { cell: 0 }); assert.equal(room.turn, 1); assert.equal(room.rolls, 3);
     assert.equal(room.players[0].cells[0], 4); assert.equal(room.rolled, false);
     assert.ok(room.held.every(v => !v));
+    assert.equal(room.log.length, 3);
+    assert.equal(room.log[0].who, 0);
+    assert.equal(room.log[2].choice, 0);
 });
 
 test('scores, upper bonus, completed games, ties and filled categories for every variant', () => {
@@ -159,6 +162,8 @@ test('HTTP room lifecycle, authentication, SSE sync, reload and public file isol
     const restored = await (await fetch(base + endpoint, { headers: { Authorization: `Bearer ${guest.token}` } })).json();
     assert.deepEqual(restored, { ...scored, you: 1 });
     assert.equal((await fetch(base + '/multiplayer/')).status, 200);
+    assert.equal((await fetch(base + '/multiplayer/analysis.js')).status, 200);
+    assert.ok(Array.isArray(restored.log) && restored.log.length > 0);
     for (const file of ['/server/index.js', '/.git/config', '/package.json', '/shared/%2e%2e/server/index.js']) assert.equal((await fetch(base + file)).status, 404);
     assert.equal((await post('/api/rooms', null)).status, 400);
     assert.equal((await post('/api/rooms', { name: 'x'.repeat(5000) })).status, 413);

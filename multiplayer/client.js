@@ -1,7 +1,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 let roomId = new URLSearchParams(location.search).get('room');
-let credential = null, state = null, source = null, connected = false, busy = false;
+let credential = null, state = null, source = null, connected = false, busy = false, analysisOpened = false;
 const storageKey = () => `yatzy-room:${roomId}`;
 function message(value = '') { $('message').textContent = value; }
 function saveCredential(value) {
@@ -79,6 +79,12 @@ function render() {
     $('offline').hidden = connected && state.phase === 'playing' && playerCount === 2;
     $('offline').classList.toggle('group-status', playerCount > 2);
     $('new-game').hidden = state.phase !== 'finished';
+    const openAnalysisBtn = $('open-analysis');
+    if (openAnalysisBtn) openAnalysisBtn.hidden = state.phase !== 'finished';
+    if (state.phase === 'finished' && !analysisOpened && typeof showAnalysis === 'function') {
+        analysisOpened = true;
+        setTimeout(() => { showAnalysis(state); }, 1200);
+    }
 
     let dice = [...$('dice').children];
     if (dice.length !== r.dice) {
@@ -245,6 +251,8 @@ $('setup').onsubmit = async event => {
     finally { $('submit').disabled = false; }
 };
 $('roll').onclick = () => { $('roll').disabled = true; action({ type: 'roll' }); };
+const openAnalysisBtn = $('open-analysis');
+if (openAnalysisBtn) openAnalysisBtn.onclick = () => { if (typeof showAnalysis === 'function') showAnalysis(state); };
 $('copy').onclick = async () => {
     try { await navigator.clipboard.writeText($('invite-url').value); $('copy').textContent = 'Copied!'; }
     catch { $('invite-url').select(); message('Copy the selected invite link and send it to your friends.'); }

@@ -9,13 +9,17 @@ function cleanName(value) {
     check(typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 24, 'Enter a name of 1–24 characters.');
     return value.trim();
 }
+function sortedHoldMask(dice, held) {
+    const indices = Array.from({ length: dice.length }, (_, i) => i).sort((a, b) => dice[a] - dice[b]);
+    return indices.reduce((m, d, i) => held[d] ? m | (1 << i) : m, 0);
+}
 function createRoom(variant, name, playerCount = 2) {
     check(rules.has(variant), 'Unknown game variant.');
     check(Number.isInteger(playerCount) && playerCount >= 2 && playerCount <= 5, 'Choose 2–5 players.');
     const r = rules.get(variant);
     const p = player(cleanName(name)); p.cells = Array(r.nCells).fill(null);
     return { variant, playerCount, players: [p], phase: 'waiting', turn: 0, rolls: r.rollsPerTurn,
-        dice: Array(r.dice).fill(1), held: Array(r.dice).fill(false), rolled: false, revision: 0, updated: Date.now() };
+        dice: Array(r.dice).fill(1), held: Array(r.dice).fill(false), rolled: false, revision: 0, log: [], updated: Date.now() };
 }
 function joinRoom(room, name) {
     check(room.phase === 'waiting' && room.players.length < room.playerCount, 'This room is full.');
@@ -33,6 +37,15 @@ function act(room, index, action, randomDie = () => randomInt(1, 7)) {
     if (action.type === 'roll') {
         check(room.rolls > 0, 'No rolls left. Choose a score.');
         check(!room.held.every(Boolean), 'Release at least one die to roll.');
+        if (room.rolled) {
+            room.log.push({
+                who: index,
+                choice: r.nCells + sortedHoldMask(room.dice, room.held),
+                pos: { mask: p.mask, bonus: Math.min(p.upper, r.bonusTarget), rolls: room.rolls, id: r.rollId(room.dice), joker: (r.jokerRule && p.alikeScored) ? 1 : 0 },
+                score: p.score,
+                dice: [...room.dice]
+            });
+        }
         room.dice = room.dice.map((d, i) => room.held[i] ? d : randomDie());
         room.rolls--; room.rolled = true;
     } else if (action.type === 'hold') {
@@ -45,6 +58,13 @@ function act(room, index, action, randomDie = () => randomInt(1, 7)) {
         check(Number.isInteger(i) && i >= 0 && i < r.nCells, 'Invalid category.');
         const placement = r.placements(r.rollId(room.dice), p.mask, p.alikeScored);
         check(Boolean(placement.legal & (1 << i)), 'Choose an available category.');
+        room.log.push({
+            who: index,
+            choice: i,
+            pos: { mask: p.mask, bonus: Math.min(p.upper, r.bonusTarget), rolls: room.rolls, id: r.rollId(room.dice), joker: (r.jokerRule && p.alikeScored) ? 1 : 0 },
+            score: p.score,
+            dice: [...room.dice]
+        });
         const points = placement.scores[i];
         p.cells[i] = points + placement.bonus; p.score += p.cells[i]; p.mask |= 1 << i;
         if (i === r.allAlikeCell && points > 0) p.alikeScored = true;
