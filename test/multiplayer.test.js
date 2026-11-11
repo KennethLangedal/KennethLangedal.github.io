@@ -41,7 +41,7 @@ test('turns, stale requests, held dice and roll limit are enforced', () => {
     assert.equal(room.log[2].choice, 0);
 });
 
-test('scores, upper bonus, completed games, ties and filled categories for every variant', () => {
+test('completed games, ties, and clean rematches for every variant and room size', () => {
     for (const variant of ['yatzy', 'maxi', 'yahtzee']) for (const playerCount of [2, 3, 4, 5]) {
         const room = start(variant, playerCount), r = rules.get(variant);
         for (let cell = 0; cell < r.nCells; cell++) for (let player = 0; player < playerCount; player++) {
@@ -58,6 +58,30 @@ test('scores, upper bonus, completed games, ties and filled categories for every
         }
         assert.equal(room.players[0].score, room.players[1].score);
         assert.throws(() => move(room, 'roll'), /not in progress/);
+
+        const players = room.players.map(({ name, token }) => ({ name, token }));
+        const finishedRevision = room.revision;
+        assert.throws(() => act(room, playerCount - 1, { type: 'replay', revision: finishedRevision }), /room creator/);
+        act(room, 0, { type: 'replay', revision: finishedRevision });
+        assert.equal(room.phase, 'playing');
+        assert.equal(room.round, 2);
+        assert.equal(room.revision, finishedRevision + 1);
+        assert.equal(room.variant, variant);
+        assert.equal(room.playerCount, playerCount);
+        assert.equal(room.turn, 0);
+        assert.equal(room.rolls, r.rollsPerTurn);
+        assert.deepEqual(room.dice, Array(r.dice).fill(1));
+        assert.deepEqual(room.held, Array(r.dice).fill(false));
+        assert.equal(room.rolled, false);
+        assert.deepEqual(room.log, []);
+        assert.deepEqual(room.players, players.map(p => ({
+            ...p, cells: Array(r.nCells).fill(null), mask: 0, upper: 0, score: 0, bonus: 0, extra: 0, alikeScored: false
+        })));
+        assert.throws(() => act(room, 0, { type: 'replay', revision: finishedRevision }), /changed/);
+        assert.throws(() => act(room, 0, { type: 'replay', revision: room.revision }), /Finish/);
+        move(room, 'roll');
+        move(room, 'score', { cell: 0 });
+        assert.equal(room.players[0].cells[0], 0);
     }
 });
 
@@ -122,7 +146,7 @@ test('five Maxi players keep their own bank of rolls and wrap back to the first 
     assert.equal(room.turn, 0);
 });
 
-test('HTTP room lifecycle, authentication, SSE sync, reload and public file isolation', async t => {
+test('HTTP room lifecycle, rematch, authentication, SSE sync, reload and public file isolation', { timeout: 10000 }, async t => {
     const server = createServer();
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     t.after(() => { server.closeAllConnections(); server.close(); });
@@ -161,6 +185,31 @@ test('HTTP room lifecycle, authentication, SSE sync, reload and public file isol
     assert.deepEqual(await nextGuestEvent(), { ...scored, you: 1 });
     const restored = await (await fetch(base + endpoint, { headers: { Authorization: `Bearer ${guest.token}` } })).json();
     assert.deepEqual(restored, { ...scored, you: 1 });
+
+    const tokens = [token, guest.token];
+    let current = scored;
+    while (current.phase === 'playing') {
+        const playerToken = tokens[current.turn];
+        const cell = current.players[current.turn].cells.indexOf(null);
+        assert.equal((await post(endpoint + '/action', { type: 'roll', revision: current.revision }, playerToken)).status, 200);
+        const roll = await nextEvent();
+        assert.deepEqual(await nextGuestEvent(), { ...roll, you: 1 });
+        assert.equal((await post(endpoint + '/action', { type: 'score', cell, revision: roll.revision }, playerToken)).status, 200);
+        current = await nextEvent();
+        assert.deepEqual(await nextGuestEvent(), { ...current, you: 1 });
+    }
+    const replay = { type: 'replay', revision: current.revision };
+    assert.equal((await post(endpoint + '/action', replay)).status, 401);
+    assert.equal((await post(endpoint + '/action', replay, guest.token)).status, 400);
+    assert.equal((await post(endpoint + '/action', replay, token)).status, 200);
+    const rematch = await nextEvent();
+    assert.equal(rematch.phase, 'playing');
+    assert.equal(rematch.round, 2);
+    assert.deepEqual(await nextGuestEvent(), { ...rematch, you: 1 });
+    for (const [you, playerToken] of tokens.entries()) {
+        const response = await fetch(base + endpoint, { headers: { Authorization: `Bearer ${playerToken}` } });
+        assert.deepEqual(await response.json(), { ...rematch, you });
+    }
     assert.equal((await fetch(base + '/multiplayer/')).status, 200);
     assert.equal((await fetch(base + '/multiplayer/analysis.js')).status, 200);
     assert.ok(Array.isArray(restored.log) && restored.log.length > 0);

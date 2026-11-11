@@ -1,7 +1,8 @@
 'use strict';
 const $ = id => document.getElementById(id);
 let roomId = new URLSearchParams(location.search).get('room');
-let credential = null, state = null, source = null, connected = false, busy = false, analysisOpened = false;
+let credential = null, state = null, source = null, connected = false, busy = false;
+let analysisOpened = false, analysisTimer = null, renderedRound = null;
 const storageKey = () => `yatzy-room:${roomId}`;
 function message(value = '') { $('message').textContent = value; }
 function saveCredential(value) {
@@ -49,6 +50,27 @@ function finishAnimation() {
     animating = false;
     render();
 }
+
+function updateReplayButtons() {
+    const replay = $('replay'), analysisReplay = $('analysis-replay');
+    replay.hidden = state.phase !== 'finished' || state.you !== 0;
+    replay.disabled = replay.hidden || !connected || busy;
+    if (analysisReplay) analysisReplay.disabled = replay.disabled;
+}
+
+function openAnalysis() {
+    clearTimeout(analysisTimer);
+    if (state.phase !== 'finished') return;
+    showAnalysis(state, replay);
+    updateReplayButtons();
+}
+
+function replay() {
+    if ($('replay').disabled) return;
+    $('analysis').hidden = true;
+    action({ type: 'replay' });
+}
+
 addEventListener('pointerdown', event => {
     swallowClick = false;
     if (!animating) return;
@@ -68,6 +90,18 @@ addEventListener('click', event => {
 function render() {
     $('connection').textContent = connected ? 'Connected' : 'Reconnecting…';
     if (!state) return;
+    if (state.round !== renderedRound) {
+        renderedRound = state.round;
+        clearTimeout(analysisTimer);
+        clearTimeout(animationTimer);
+        analysisOpened = false;
+        animating = false;
+        display = null;
+        latest = [];
+        previousMasks = [];
+        $('analysis').hidden = true;
+        $('analysis').replaceChildren();
+    }
     const r = buildRules(state.variant), myIndex = state.you, playerCount = state.playerCount || 2;
     const mine = connected && !animating && state.phase === 'playing' && myIndex === state.turn;
     $('game-title').textContent = r.title;
@@ -79,11 +113,12 @@ function render() {
     $('offline').hidden = connected && state.phase === 'playing' && playerCount === 2;
     $('offline').classList.toggle('group-status', playerCount > 2);
     $('new-game').hidden = state.phase !== 'finished';
+    updateReplayButtons();
     const openAnalysisBtn = $('open-analysis');
     if (openAnalysisBtn) openAnalysisBtn.hidden = state.phase !== 'finished';
     if (state.phase === 'finished' && !analysisOpened && typeof showAnalysis === 'function') {
         analysisOpened = true;
-        setTimeout(() => { showAnalysis(state); }, 1200);
+        analysisTimer = setTimeout(openAnalysis, 1200);
     }
 
     let dice = [...$('dice').children];
@@ -251,8 +286,9 @@ $('setup').onsubmit = async event => {
     finally { $('submit').disabled = false; }
 };
 $('roll').onclick = () => { $('roll').disabled = true; action({ type: 'roll' }); };
+$('replay').onclick = replay;
 const openAnalysisBtn = $('open-analysis');
-if (openAnalysisBtn) openAnalysisBtn.onclick = () => { if (typeof showAnalysis === 'function') showAnalysis(state); };
+if (openAnalysisBtn && typeof showAnalysis === 'function') openAnalysisBtn.onclick = openAnalysis;
 $('copy').onclick = async () => {
     try { await navigator.clipboard.writeText($('invite-url').value); $('copy').textContent = 'Copied!'; }
     catch { $('invite-url').select(); message('Copy the selected invite link and send it to your friends.'); }
