@@ -36,3 +36,4 @@ td.bot.preview { color: var(--blue); font-style: italic; font-weight: 700; }
 #analysis .actions button { background: var(--shade); color: var(--ink); border: 1px solid var(--line); }
 #analysis .actions a { background: var(--green); color: var(--on-green); }
 #analysis .actions #analysis-replay { background: var(--green); color: var(--on-green); }
+#analysis .actions #analysis-replay:disabled { background: var(--disabled-bg); color: var(--faint); }

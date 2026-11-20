@@ -197,7 +197,7 @@ async function showAnalysis(state, replay) {
             <div id="analysis-content"><p class="loading">Pricing decisions with solver…</p></div>
             <div class="actions">
                 <button id="close-analysis" type="button">Back to score sheet</button>
-                ${state.you === 0 ? '<button id="analysis-replay" type="button" disabled>Play again</button>' : ''}
+                <button id="analysis-replay" type="button" hidden disabled>Play again</button>
                 <a id="analysis-new-game" href="/multiplayer/">New room</a>
             </div>
         </div>

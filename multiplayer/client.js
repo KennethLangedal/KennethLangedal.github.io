@@ -2,7 +2,7 @@
 const $ = id => document.getElementById(id);
 let roomId = new URLSearchParams(location.search).get('room');
 let credential = null, state = null, source = null, connected = false, busy = false;
-let analysisOpened = false, analysisTimer = null, renderedRound = null;
+let analysisOpened = false, analysisTimer = null, renderedRound = null, analysisRound = null;
 const storageKey = () => `yatzy-room:${roomId}`;
 function message(value = '') { $('message').textContent = value; }
 function saveCredential(value) {
@@ -52,28 +52,39 @@ function finishAnimation() {
 }
 
 function updateReplayButtons() {
-    const replay = $('replay'), analysisReplay = $('analysis-replay');
-    replay.hidden = state.phase !== 'finished' || state.you !== 0;
-    replay.disabled = replay.hidden || !connected || busy;
-    if (analysisReplay) analysisReplay.disabled = replay.disabled;
+    const replayBtn = $('replay'), analysisReplay = $('analysis-replay');
+    replayBtn.hidden = state.phase !== 'finished' || state.you !== 0;
+    replayBtn.disabled = replayBtn.hidden || !connected || busy;
+    if (analysisReplay) {
+        const nextRoundStarted = !$('analysis').hidden && state.round !== analysisRound;
+        analysisReplay.hidden = nextRoundStarted ? false : replayBtn.hidden;
+        analysisReplay.disabled = nextRoundStarted ? false : replayBtn.disabled;
+    }
 }
 
 function openAnalysis() {
     clearTimeout(analysisTimer);
     if (state.phase !== 'finished') return;
+    analysisRound = state.round;
     showAnalysis(state, replay);
     updateReplayButtons();
 }
 
 function replay() {
+    if (!$('analysis').hidden && state.round !== analysisRound) {
+        $('analysis').hidden = true;
+        $('analysis').replaceChildren();
+        return;
+    }
     if ($('replay').disabled) return;
     $('analysis').hidden = true;
+    $('analysis').replaceChildren();
     action({ type: 'replay' });
 }
 
 addEventListener('pointerdown', event => {
     swallowClick = false;
-    if (!animating) return;
+    if (!animating || !$('analysis').hidden) return;
     document.body.classList.add('skip');
     finishAnimation();
     requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.remove('skip')));
@@ -99,8 +110,7 @@ function render() {
         display = null;
         latest = [];
         previousMasks = [];
-        $('analysis').hidden = true;
-        $('analysis').replaceChildren();
+        if ($('analysis').hidden) $('analysis').replaceChildren();
     }
     const r = buildRules(state.variant), myIndex = state.you, playerCount = state.playerCount || 2;
     const mine = connected && !animating && state.phase === 'playing' && myIndex === state.turn;
