@@ -12,7 +12,7 @@ Install Node.js 22 or later, then run:
 npm start
 ```
 
-Open http://localhost:3000/multiplayer/, enter your name, choose 2–5 players, and create a room. Send the same invite link to your friends. The game starts automatically when all selected seats are filled; moves are disabled while waiting. The creator plays first, followed by the others in join order, cycling back to the creator. Each player rolls up to three times (plus their own banked rolls in Maxi), keeps dice, and chooses a category. Scores and dice update live on every screen. A zero is a valid score. The game finishes when everyone has filled their sheet, and joint winners are shown for ties. A new game uses a new room; its player count cannot change after creation.
+Open http://localhost:3000/multiplayer/, enter your name, choose 2–5 players, and create a room. Send the same invite link to your friends. The game starts automatically when all selected seats are filled; moves are disabled while waiting. The creator plays first, followed by the others in join order, cycling back to the creator. Each player rolls up to three times (plus their own banked rolls in Maxi), keeps dice, and chooses a category. Scores and dice update live on every screen. A zero is a valid score. The game finishes when everyone has filled their sheet, and joint winners are shown for ties. The room creator can select **Play again** to start a fresh game with the same players, variant, and invite link. To change variants or player counts, select **New room**.
 
 If `npm` is unavailable but Node.js is installed, run `node server/index.js` instead. There are no packages to install.
 

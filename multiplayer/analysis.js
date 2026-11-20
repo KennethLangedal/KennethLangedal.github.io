@@ -188,11 +188,24 @@ function renderBlunders(who, priced, r, players) {
         `).join('') + `</tbody></table>`;
 }
 
-async function showAnalysis(state) {
+async function showAnalysis(state, replay) {
     const screen = document.getElementById('analysis');
     if (!screen) return;
     screen.hidden = false;
-    screen.innerHTML = `<div class="sheet"><p class="loading">Pricing decisions with solver…</p></div>`;
+    screen.innerHTML = `
+        <div class="sheet">
+            <div id="analysis-content"><p class="loading">Pricing decisions with solver…</p></div>
+            <div class="actions">
+                <button id="close-analysis" type="button">Back to score sheet</button>
+                ${state.you === 0 ? '<button id="analysis-replay" type="button" disabled>Play again</button>' : ''}
+                <a id="analysis-new-game" href="/multiplayer/">New room</a>
+            </div>
+        </div>
+    `;
+    const content = document.getElementById('analysis-content');
+    document.getElementById('close-analysis').onclick = () => { screen.hidden = true; };
+    const replayBtn = document.getElementById('analysis-replay');
+    if (replayBtn) replayBtn.onclick = replay;
 
     const r = buildRules(state.variant);
     const C = r.nCells, HOLDS = 1 << r.dice;
@@ -203,6 +216,7 @@ async function showAnalysis(state) {
     }));
 
     const par = await fetchPar(state.variant);
+    if (!screen.contains(content)) return;
     const gaps = log.filter(e => !e.ev).length;
 
     const priced = state.players.map((p, i) => {
@@ -276,8 +290,7 @@ async function showAnalysis(state) {
             </div>
         ` : '';
 
-        screen.innerHTML = `
-            <div class="sheet">
+        content.innerHTML = `
                 <h2>Game breakdown</h2>
                 ${gaps ? `<p class="warn">${gaps} decision${gaps > 1 ? 's' : ''} could not be priced by the solver.</p>` : ''}
                 <div class="cards">
@@ -301,15 +314,7 @@ async function showAnalysis(state) {
                     ${renderBlunders(selectedBlunderPlayer, priced, r, state.players)}
                 </div>
 
-                <div class="actions">
-                    <button id="close-analysis" type="button">Back to score sheet</button>
-                    <a id="analysis-new-game" href="/multiplayer/">Play again</a>
-                </div>
-            </div>
         `;
-
-        const closeBtn = document.getElementById('close-analysis');
-        if (closeBtn) closeBtn.onclick = () => { screen.hidden = true; };
 
         screen.querySelectorAll('.blunder-tab').forEach(tab => {
             tab.onclick = () => {

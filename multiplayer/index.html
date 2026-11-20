@@ -31,7 +31,12 @@
                 <tbody id="scores"></tbody>
             </table>
         </div>
-        <div id="offline" role="status"><span id="connection">Connecting…</span><span id="turn"></span> <button id="open-analysis" type="button" hidden>Game breakdown</button> <a id="new-game" href="/multiplayer/" hidden>Play again</a></div>
+        <div id="offline" role="status">
+            <span id="connection">Connecting…</span><span id="turn"></span>
+            <button id="open-analysis" type="button" hidden>Game breakdown</button>
+            <button id="replay" type="button" hidden disabled>Play again</button>
+            <a id="new-game" href="/multiplayer/" hidden>New room</a>
+        </div>
         <div id="invite" hidden>
             <label>Invite your friends<input id="invite-url" readonly></label>
             <button id="copy" type="button">Copy invite link</button>

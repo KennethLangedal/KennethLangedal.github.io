@@ -26,7 +26,7 @@ input, select { display: block; width: 100%; padding: .7em; margin-top: .4em; fo
 #rolls > span { white-space: nowrap; }
 #offline.group-status { color: var(--ink); background: var(--shade); border-color: var(--line); }
 td.bot.preview { color: var(--blue); font-style: italic; font-weight: 700; }
-#open-analysis { padding: .3em .8em; font-size: .85rem; margin: 0 .4em; }
+#open-analysis, #replay { padding: .3em .8em; font-size: .85rem; margin: 0 .4em; }
 #analysis { z-index: 30; }
 .blunder-tabs { display: flex; flex-wrap: wrap; gap: .5em; margin: .8em 0; }
 .blunder-tab { padding: .4em .8em; font-size: .85rem; background: var(--shade); color: var(--ink); border: 1px solid var(--line); border-radius: 6px; cursor: pointer; }
@@ -35,3 +35,4 @@ td.bot.preview { color: var(--blue); font-style: italic; font-weight: 700; }
 #analysis .actions button, #analysis .actions a { display: inline-flex; align-items: center; justify-content: center; padding: .7em 1.2em; border-radius: 8px; text-decoration: none; font-weight: 700; font-size: 1rem; }
 #analysis .actions button { background: var(--shade); color: var(--ink); border: 1px solid var(--line); }
 #analysis .actions a { background: var(--green); color: var(--on-green); }
+#analysis .actions #analysis-replay { background: var(--green); color: var(--on-green); }
